@@ -771,9 +771,9 @@ namespace Novell.Directory.Ldap
 
                             socket = new System.Net.Sockets.TcpClient();
                             socket.ConnectAsync(host, port).Wait();
-                            var sslStream = new SslStream(socket.GetStream(), true);
+                            var sslStream = new SslStream(socket.GetStream(), true, UserCertificateValidationCallback);
 
-                            sslStream.AuthenticateAsClientAsync(host, new Syscert.X509Certificate2Collection(), SslProtocols.Tls, false).Wait();
+                            sslStream.AuthenticateAsClientAsync(host, new Syscert.X509Certificate2Collection(), SslProtocols.Tls12, false).Wait();
 
                             in_Renamed = (System.IO.Stream)sslStream;
                             out_Renamed = (System.IO.Stream)sslStream;
@@ -834,8 +834,14 @@ namespace Novell.Directory.Ldap
 			}
 			return;
 		}
-		
-		/// <summary>  Increments the count of cloned connections</summary>
+
+	    private bool UserCertificateValidationCallback(object sender, Syscert.X509Certificate certificate, Syscert.X509Chain chain, SslPolicyErrors sslPolicyErrors)
+	    {
+            //TODO : just a temp stuff
+	        return true;
+	    }
+
+	    /// <summary>  Increments the count of cloned connections</summary>
 		/* package */
 		internal void  incrCloneCount()
 		{
@@ -1405,11 +1411,11 @@ namespace Novell.Directory.Ldap
                 //in_Renamed = (System.IO.Stream) objSslClientStream;
                 //out_Renamed = (System.IO.Stream) objSslClientStream;
 
-            
+                socket =new TcpClient();
                 socket.ConnectAsync(host, port).Wait();
-                var sslStream = new SslStream(socket.GetStream(), true);
+                var sslStream = new SslStream(socket.GetStream(), true, UserCertificateValidationCallback);
 
-                sslStream.AuthenticateAsClientAsync(host, new Syscert.X509Certificate2Collection(), SslProtocols.Tls, false).Wait();
+                sslStream.AuthenticateAsClientAsync(host, new Syscert.X509Certificate2Collection(), SslProtocols.Tls12, false).Wait();
 
                 in_Renamed = (System.IO.Stream)sslStream;
                 out_Renamed = (System.IO.Stream)sslStream;
