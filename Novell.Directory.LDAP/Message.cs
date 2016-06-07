@@ -158,14 +158,14 @@ namespace Novell.Directory.Ldap
 				{
 					if ((replies.Count == 0))
 					{
-						try
-						{
+						//try
+						//{
 							System.Threading.Monitor.Wait(replies);
-						}
-						catch (System.Threading.ThreadInterruptedException ir)
-						{
-							; // do nothing
-						}
+						//}
+						//catch (System.Threading.ThreadInterruptedException ir)
+						//{
+						//	; // do nothing
+						//}
 						if (waitForReply_Renamed_Field)
 						{
 							continue;
@@ -588,17 +588,17 @@ namespace Novell.Directory.Ldap
 			/// </summary>
 			override public void  Run()
 			{
-				try
-				{
+				//try
+				//{
 					System.Threading.Thread.Sleep(new System.TimeSpan(10000 * timeToWait));
 					message.acceptReplies = false;
 					// Note: Abandon clears the bind semaphore after failed bind.
 					message.Abandon(null, new InterThreadException("Client request timed out", null, LdapException.Ldap_TIMEOUT, null, message));
-				}
-				catch (System.Threading.ThreadInterruptedException ie)
-				{
+				//}
+				//catch (System.Threading.ThreadInterruptedException ie)
+				//{
 					// the timer was stopped, do nothing
-				}
+				//}
 				return ;
 			}
 		}

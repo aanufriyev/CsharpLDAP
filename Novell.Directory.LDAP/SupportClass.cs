@@ -38,6 +38,7 @@
 
 using System;
 using System.Reflection;
+using System.Security.Cryptography;
 
 /// <summary>
 /// This interface should be implemented by any class whose instances are intended 
@@ -629,7 +630,7 @@ public interface IThreadRunnable
 			/// </summary>
 			public virtual void Interrupt()
 			{
-				threadField.Interrupt();
+				//threadField.Interrupt();
 			}
 	      
 			/// <summary>
@@ -1740,7 +1741,7 @@ public interface IThreadRunnable
 				{
 					this.algorithmName = algorithm;
 				}
-				this.Algorithm = (System.Security.Cryptography.HashAlgorithm) System.Security.Cryptography.CryptoConfig.CreateFromName(this.algorithmName);			
+			    this.Algorithm =  new HMACSHA1();//  System.Security.Cryptography.HashAlgorithmName CryptoConfig.CreateFromName(this.algorithmName);			
 				this.position  = 0;
 			}
 

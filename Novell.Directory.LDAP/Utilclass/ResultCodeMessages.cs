@@ -38,7 +38,7 @@ namespace Novell.Directory.Ldap.Utilclass
 	/// The resources are accessed by the String representation of the result code.
 	/// </summary>
 	
-	public class ResultCodeMessages:System.Resources.ResourceManager
+	public class ResultCodeMessages//:System.Resources.ResourceManager
 	{
 		public System.Object[][] getContents()
 		{

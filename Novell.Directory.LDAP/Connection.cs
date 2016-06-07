@@ -39,15 +39,13 @@ using System.Security.Cryptography;
 using System.Net;
 using System.Net.Sockets;
 using System.Collections;
-using System.IO;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Globalization;
-using System.Reflection;
+using System.Net.Security;
 
 namespace Novell.Directory.Ldap
 {
-	public delegate bool CertificateValidationCallback(
+    using System.Security.Authentication;
+
+    public delegate bool CertificateValidationCallback(
 		Syscert.X509Certificate certificate,
 		int[] certificateErrors);
 	
@@ -484,17 +482,17 @@ namespace Novell.Directory.Ldap
 							// we already own the semahpore
 							break;
 						}
-						try
-						{
+						//try
+						//{
 							// Keep trying for the lock
 							System.Threading.Monitor.Wait(writeSemaphore);
 							continue;
-						}
-						catch (System.Threading.ThreadInterruptedException ex)
-						{
-							// Keep trying for the lock
-							continue;
-						}
+						//}
+						//catch (ThreadInterruptedException ex)
+						//{
+						//	// Keep trying for the lock
+						//	continue;
+						//}
 					}
 				}
 				writeSemaphoreCount++;
@@ -567,8 +565,8 @@ namespace Novell.Directory.Ldap
 			{
 				// Don't initialize connection while previous reader thread still
 				// active.
-				try
-				{
+				//try
+				//{
 					/*
 					* The reader thread may start and immediately terminate.
 					* To prevent the waitForReader from waiting forever
@@ -588,13 +586,13 @@ namespace Novell.Directory.Ldap
 					}
 					lock (this)
 					{
-						System.Threading.Monitor.Wait(this, TimeSpan.FromMilliseconds(5));
+						Monitor.Wait(this, TimeSpan.FromMilliseconds(5));
 					}
-				}
-				catch (System.Threading.ThreadInterruptedException ex)
-				{
-					;
-				}
+				//}
+				//catch (System.Threading.ThreadInterruptedException ex)
+				//{
+					
+				//}
 				if(reader!=null)
 				{
 					rInst=reader;
@@ -697,7 +695,7 @@ namespace Novell.Directory.Ldap
 		/// </param>
 		/// <param name="semaphoreId">The write semaphore ID to use for the connect
 		/// </param>
-		private void  connect(System.String host, int port, int semaphoreId)
+		private void connect(System.String host, int port, int semaphoreId)
 		{
 			/* Synchronized so all variables are in a consistant state and
 			* so that another thread isn't doing a connect, disconnect, or clone
@@ -726,64 +724,74 @@ namespace Novell.Directory.Ldap
 					{
 						if(Ssl)
 						{
-							this.host = host;
-							this.port = port;
-							this.sock = 	new Socket ( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
-							IPAddress hostadd = Dns.GetHostEntryAsync(host).Result.AddressList[0]; 
-							IPEndPoint ephost = new IPEndPoint(hostadd,port);
-							sock.Connect(ephost);
-							NetworkStream nstream = new NetworkStream(sock,true);
+                            this.host = host;
+                            this.port = port;
+                            //this.sock = new Socket ( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
+                            //IPAddress hostadd = Dns.GetHostEntryAsync(host).Result.AddressList[0]; 
+                            //IPEndPoint ephost = new IPEndPoint(hostadd,port);
+                            //sock.Connect(ephost);
+                            //NetworkStream nstream = new NetworkStream(sock,true);
 
-							// Load Mono.Security.dll
-							Assembly a;
-							try
-							{
-								a = Assembly.LoadWithPartialName("Mono.Security");
-							}
-							catch(System.IO.FileNotFoundException)
-							{
-								throw new LdapException(ExceptionMessages.SSL_PROVIDER_MISSING, LdapException.SSL_PROVIDER_NOT_FOUND, null);							
-							}
-							Type tSslClientStream = a.GetType("Mono.Security.Protocol.Tls.SslClientStream");
-							BindingFlags flags = (BindingFlags.NonPublic  | BindingFlags.Public |
-								BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                            //// Load Mono.Security.dll
+                            //Assembly a;
+                            //try
+                            //{
+                            //	a = Assembly.LoadWithPartialName("Mono.Security");
+                            //}
+                            //catch(System.IO.FileNotFoundException)
+                            //{
+                            //	throw new LdapException(ExceptionMessages.SSL_PROVIDER_MISSING, LdapException.SSL_PROVIDER_NOT_FOUND, null);							
+                            //}
+                            //Type tSslClientStream = a.GetType("Mono.Security.Protocol.Tls.SslClientStream");
+                            //BindingFlags flags = (BindingFlags.NonPublic  | BindingFlags.Public |
+                            //	BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
-							object[] consArgs = new object[4];
-							consArgs[0] = nstream;
-							consArgs[1] = host;
-							consArgs[2] = false;
-							Type tSecurityProtocolType = a.GetType("Mono.Security.Protocol.Tls.SecurityProtocolType");
-							Enum objSPType = (Enum)(Activator.CreateInstance(tSecurityProtocolType));
-							int nSsl3Val = (int) Enum.Parse(tSecurityProtocolType, "Ssl3");
-							int nTlsVal = (int) Enum.Parse(tSecurityProtocolType, "Tls");
-							consArgs[3] = Enum.ToObject(tSecurityProtocolType, nSsl3Val | nTlsVal);
+                            //object[] consArgs = new object[4];
+                            //consArgs[0] = nstream;
+                            //consArgs[1] = host;
+                            //consArgs[2] = false;
+                            //Type tSecurityProtocolType = a.GetType("Mono.Security.Protocol.Tls.SecurityProtocolType");
+                            //Enum objSPType = (Enum)(Activator.CreateInstance(tSecurityProtocolType));
+                            //int nSsl3Val = (int) Enum.Parse(tSecurityProtocolType, "Ssl3");
+                            //int nTlsVal = (int) Enum.Parse(tSecurityProtocolType, "Tls");
+                            //consArgs[3] = Enum.ToObject(tSecurityProtocolType, nSsl3Val | nTlsVal);
 
-							object objSslClientStream = 
-								Activator.CreateInstance(tSslClientStream, consArgs);
+                            //object objSslClientStream = 
+                            //	Activator.CreateInstance(tSslClientStream, consArgs);
 
-							// Register ServerCertValidationDelegate handler
-							PropertyInfo pi = tSslClientStream.GetProperty("ServerCertValidationDelegate");
-							pi.SetValue(objSslClientStream, 
-								Delegate.CreateDelegate(pi.PropertyType, this, "ServerCertificateValidation"),
-								null);
-						
-							// Get the in and out streams
-							in_Renamed = (System.IO.Stream) objSslClientStream;
-							out_Renamed = (System.IO.Stream) objSslClientStream;
-							/*
+                            //// Register ServerCertValidationDelegate handler
+                            //PropertyInfo pi = tSslClientStream.GetProperty("ServerCertValidationDelegate");
+                            //pi.SetValue(objSslClientStream, 
+                            //	Delegate.CreateDelegate(pi.PropertyType, this, "ServerCertificateValidation"),
+                            //	null);
+
+                            // Get the in and out streams
+       //                     in_Renamed = (System.IO.Stream) objSslClientStream;
+							//out_Renamed = (System.IO.Stream) objSslClientStream;
+
+                            socket = new System.Net.Sockets.TcpClient();
+                            socket.ConnectAsync(host, port).Wait();
+                            var sslStream = new SslStream(socket.GetStream(), true);
+
+                            sslStream.AuthenticateAsClientAsync(host, new Syscert.X509Certificate2Collection(), SslProtocols.Tls, false).Wait();
+
+                            in_Renamed = (System.IO.Stream)sslStream;
+                            out_Renamed = (System.IO.Stream)sslStream;
+                            
+                            /*
 							SslClientStream sslstream = new SslClientStream(
 												nstream,
 												host,
 												false,
 												Mono.Security.Protocol.Tls.SecurityProtocolType.Ssl3|Mono.Security.Protocol.Tls.SecurityProtocolType.Tls);
 							sslstream.ServerCertValidationDelegate += new CertificateValidationCallback(ServerCertificateValidation);*/
-							//						byte[] buffer = new byte[0];
-							//						sslstream.Read(buffer, 0, buffer.Length);
-							//						sslstream.doHandshake();												
-							/*
+                            //						byte[] buffer = new byte[0];
+                            //						sslstream.Read(buffer, 0, buffer.Length);
+                            //						sslstream.doHandshake();												
+                            /*
 							in_Renamed = (System.IO.Stream) sslstream;
 							out_Renamed = (System.IO.Stream) sslstream;*/
-						}
+                        }
 						else
 						{
 							socket = new System.Net.Sockets.TcpClient();
@@ -1132,9 +1140,11 @@ namespace Novell.Directory.Ldap
 			if (socket != null || sock != null)
 			{
 				// Just before closing the sockets, abort the reader thread
-				if ((reader != null) && (reason != "reader: thread stopping")) 
-					reader.Abort();
-				// Close the socket
+			    if ((reader != null) && (reason != "reader: thread stopping"))
+			    {
+			        //reader.Abort();
+			    }
+			    // Close the socket
 				try
 				{
 					if(Ssl)
@@ -1219,9 +1229,11 @@ namespace Novell.Directory.Ldap
 				if (socket != null || sock != null)
 				{
 					// Just before closing the sockets, abort the reader thread
-					if ((reader != null) && (reason != "reader: thread stopping")) 
-						reader.Abort();
-					// Close the socket
+				    if ((reader != null) && (reason != "reader: thread stopping"))
+				    {
+				        //reader.Abort();
+				    }
+				    // Close the socket
                     try
                     {
                         if (in_Renamed != null)
@@ -1349,51 +1361,60 @@ namespace Novell.Directory.Ldap
 			{
 				waitForReader(null);
 				this.nonTLSBackup = this.socket;
-				/*				this.sock = 	new Socket ( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
+                /*				this.sock = 	new Socket ( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
 								IPAddress hostadd = Dns.Resolve(host).AddressList[0];
 								IPEndPoint ephost = new IPEndPoint(hostadd,port);
 								sock.Connect(ephost);
 				*/
-				//				NetworkStream nstream = new NetworkStream(this.socket,true);
-				
-				// Load Mono.Security.dll
-				Assembly a = null;
-				try
-				{
-					a = Assembly.LoadWithPartialName("Mono.Security");
-				}
-				catch(System.IO.FileNotFoundException)
-				{
-					throw new LdapException(ExceptionMessages.SSL_PROVIDER_MISSING, LdapException.SSL_PROVIDER_NOT_FOUND, null);							
-				}
-				
-				Type tSslClientStream = a.GetType("Mono.Security.Protocol.Tls.SslClientStream");
-				BindingFlags flags = (BindingFlags.NonPublic  | BindingFlags.Public |
-					BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                //				NetworkStream nstream = new NetworkStream(this.socket,true);
 
-				object[] consArgs = new object[4];
-				consArgs[0] = socket.GetStream();
-				consArgs[1] = host;
-				consArgs[2] = false;
-				Type tSecurityProtocolType = a.GetType("Mono.Security.Protocol.Tls.SecurityProtocolType");
-				Enum objSPType = (Enum)(Activator.CreateInstance(tSecurityProtocolType));
-				int nSsl3Val = (int) Enum.Parse(tSecurityProtocolType, "Ssl3");
-				int nTlsVal = (int) Enum.Parse(tSecurityProtocolType, "Tls");
-				consArgs[3] = Enum.ToObject(tSecurityProtocolType, nSsl3Val | nTlsVal);
+                // Load Mono.Security.dll
+                //Assembly a = null;
+                //try
+                //{
+                //	a = Assembly.LoadWithPartialName("Mono.Security");
+                //}
+                //catch(System.IO.FileNotFoundException)
+                //{
+                //	throw new LdapException(ExceptionMessages.SSL_PROVIDER_MISSING, LdapException.SSL_PROVIDER_NOT_FOUND, null);							
+                //}
 
-				object objSslClientStream = 
-					Activator.CreateInstance(tSslClientStream, consArgs);
+                //Type tSslClientStream = a.GetType("Mono.Security.Protocol.Tls.SslClientStream");
+                //BindingFlags flags = (BindingFlags.NonPublic  | BindingFlags.Public |
+                //	BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
-				// Register ServerCertValidationDelegate handler
-				EventInfo ei = tSslClientStream.GetEvent("ServerCertValidationDelegate");
-				ei.AddEventHandler(objSslClientStream, 
-					Delegate.CreateDelegate(ei.EventHandlerType, this, "ServerCertificateValidation"));
-						
-				// Get the in and out streams
-				in_Renamed = (System.IO.Stream) objSslClientStream;
-				out_Renamed = (System.IO.Stream) objSslClientStream;
+                //object[] consArgs = new object[4];
+                //consArgs[0] = socket.GetStream();
+                //consArgs[1] = host;
+                //consArgs[2] = false;
+                //Type tSecurityProtocolType = a.GetType("Mono.Security.Protocol.Tls.SecurityProtocolType");
+                //Enum objSPType = (Enum)(Activator.CreateInstance(tSecurityProtocolType));
+                //int nSsl3Val = (int) Enum.Parse(tSecurityProtocolType, "Ssl3");
+                //int nTlsVal = (int) Enum.Parse(tSecurityProtocolType, "Tls");
+                //consArgs[3] = Enum.ToObject(tSecurityProtocolType, nSsl3Val | nTlsVal);
 
-				/*
+                //object objSslClientStream = 
+                //	Activator.CreateInstance(tSslClientStream, consArgs);
+
+                //// Register ServerCertValidationDelegate handler
+                //EventInfo ei = tSslClientStream.GetEvent("ServerCertValidationDelegate");
+                //ei.AddEventHandler(objSslClientStream, 
+                //	Delegate.CreateDelegate(ei.EventHandlerType, this, "ServerCertificateValidation"));
+
+                //// Get the in and out streams
+                //in_Renamed = (System.IO.Stream) objSslClientStream;
+                //out_Renamed = (System.IO.Stream) objSslClientStream;
+
+            
+                socket.ConnectAsync(host, port).Wait();
+                var sslStream = new SslStream(socket.GetStream(), true);
+
+                sslStream.AuthenticateAsClientAsync(host, new Syscert.X509Certificate2Collection(), SslProtocols.Tls, false).Wait();
+
+                in_Renamed = (System.IO.Stream)sslStream;
+                out_Renamed = (System.IO.Stream)sslStream;
+
+                /*
 				SslClientStream sslstream = new SslClientStream(
 									socket.GetStream(),
 									nstream,
@@ -1403,7 +1424,7 @@ namespace Novell.Directory.Ldap
 				sslstream.ServerCertValidationDelegate = new CertificateValidationCallback(ServerCertificateValidation);
 				this.in_Renamed = (System.IO.Stream) sslstream;
 				this.out_Renamed = (System.IO.Stream) sslstream;*/
-			}
+            }
 			catch (System.IO.IOException ioe)
 			{
 				this.nonTLSBackup = null;
@@ -1600,12 +1621,12 @@ namespace Novell.Directory.Ldap
 						}
 					}
 				}
-				catch(ThreadAbortException tae)
-				{
-					// Abort has been called on reader
-					// before closing sockets, from shutdown
-					return;
-				}
+				//catch(ThreadAbortException tae)
+				//{
+				//	// Abort has been called on reader
+				//	// before closing sockets, from shutdown
+				//	return;
+				//}
 
 				catch (System.IO.IOException ioe)
 				{
