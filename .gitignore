@@ -5,4 +5,4 @@ bin/
 *.suo
 *.csproj.*
 *.lock.json
-/Novell.Directory.LDAP/.vs
+.vs/
