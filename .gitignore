@@ -6,3 +6,5 @@ bin/
 *.csproj.*
 *.lock.json
 /Novell.Directory.LDAP/.vs
+*.user
+.vs

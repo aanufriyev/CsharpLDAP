@@ -9,8 +9,8 @@
       "type": "platform",
       "version": "1.0.0-rc2-3002702"
     },
-    "Novell.Directory.LDAP": "1.0.0-*"
-  },
+    "Novell.Directory.LDAP": {"target": "project"}
+    },
 
   "frameworks": {
     "netstandard1.5": {
