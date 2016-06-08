@@ -211,7 +211,8 @@ namespace Novell.Directory.Ldap
 		private static int resultsNum = 0; // used for debug
 		private System.String name; // used for debug
 		private LdapConnection conn; // LdapConnection which started search
-		private LdapSearchConstraints cons; // LdapSearchConstraints for search
+        private LdapConnectionV2 connv2; // LdapConnection which started search
+        private LdapSearchConstraints cons; // LdapSearchConstraints for search
 		private System.Collections.ArrayList referralConn = null; // Referral Connections
 		
 		/// <summary> Constructs a queue object for search results.
@@ -247,13 +248,33 @@ namespace Novell.Directory.Ldap
 			
 			return ;
 		}
-		
-		/// <summary> Reports if there are more search results.
-		/// 
-		/// </summary>
-		/// <returns> true if there are more search results.
-		/// </returns>
-		public virtual bool hasMore()
+        internal LdapSearchResults(LdapConnectionV2 conn, LdapSearchQueue queue, LdapSearchConstraints cons)
+        {
+            // setup entry Vector
+            this.connv2 = conn;
+            this.cons = cons;
+            int batchSize = cons.BatchSize;
+            int vectorIncr = (batchSize == 0) ? 64 : 0;
+            entries = new System.Collections.ArrayList((batchSize == 0) ? 64 : batchSize);
+            entryCount = 0;
+            entryIndex = 0;
+
+            // setup search reference Vector
+            references = new System.Collections.ArrayList(5);
+            referenceCount = 0;
+            referenceIndex = 0;
+
+            this.queue = queue;
+            this.batchSize = (batchSize == 0) ? System.Int32.MaxValue : batchSize;
+
+            return;
+        }
+        /// <summary> Reports if there are more search results.
+        /// 
+        /// </summary>
+        /// <returns> true if there are more search results.
+        /// </returns>
+        public virtual bool hasMore()
 		{
 			bool ret = false;
 			if ((entryIndex < entryCount) || (referenceIndex < referenceCount))

@@ -112,7 +112,7 @@ namespace Novell.Directory.Ldap
 			encoder = new LBEREncoder();
 			decoder = new LBERDecoder();
 			stopReaderMessageID = CONTINUE_READING;
-			messages = new MessageVector(5, 5);
+			messages = new MessageVector<Message>(5, 5);
 			unsolicitedListeners = new System.Collections.ArrayList(3);
 		}
 		/// <summary>  Indicates whether clones exist for LdapConnection
@@ -355,7 +355,7 @@ namespace Novell.Directory.Ldap
 		
 		
 		// Place to save message information classes
-		private MessageVector messages;
+		private MessageVector<Message> messages;
 		
 		// Connection created to follow referral
 		private ReferralInfo activeReferral = null;

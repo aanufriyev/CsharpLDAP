@@ -38,11 +38,11 @@ namespace Novell.Directory.Ldap
 	
 	/// <summary> Encapsulates an Ldap message, its state, and its replies.</summary>
 	/* package */
-	class Message
+	public class Message
 	{
 		private void  InitBlock()
 		{
-			replies = new MessageVector(5, 5);
+			replies = new MessageVector<LdapResponse>(5, 5);
 		}
 		/// <summary> Get number of messages queued.
 		/// Don't count the last message containing result code.
@@ -298,7 +298,7 @@ namespace Novell.Directory.Ldap
 		private int mslimit; // client time limit in milliseconds
 		private SupportClass.ThreadClass timer = null; // Timeout thread
 		// Note: MessageVector is synchronized
-		private MessageVector replies; // place to store replies
+		private MessageVector<LdapResponse> replies; // place to store replies
 		private int msgId; // message ID of this request
 		private bool acceptReplies = true; // false if no longer accepting replies
 		private bool waitForReply_Renamed_Field = true; // true if wait for reply
@@ -460,7 +460,7 @@ namespace Novell.Directory.Ldap
 		}
 
 
-		internal virtual void  putReply(RfcLdapMessage message)
+		internal virtual void putReply(RfcLdapMessage message)
 		{
 			if (!acceptReplies)
 			{
@@ -468,7 +468,7 @@ namespace Novell.Directory.Ldap
 			}
 			lock(replies)
 			{
-				replies.Add(message);
+				//replies.Add(message);
 			}
 			message.RequestingMessage = msg; // Save request message info
 			switch (message.Type)

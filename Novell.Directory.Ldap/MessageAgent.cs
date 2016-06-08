@@ -34,19 +34,20 @@ using Novell.Directory.Ldap.Utilclass;
 
 namespace Novell.Directory.Ldap
 {
-	
-	/* package */
+    using System.Threading.Tasks;
+
+    /* package */
 	class MessageAgent
 	{
 		private void  InitBlock()
 		{
-			messages = new MessageVector(5, 5);
+			messages = new MessageVector<Message>(5, 5);
 		}
 		/// <summary> empty and return all messages owned by this agent
 		/// 
 		/// 
 		/// </summary>
-		virtual internal System.Object[] MessageArray
+		virtual internal Message[] MessageArray
 		{
 			/* package */
 			
@@ -113,7 +114,7 @@ namespace Novell.Directory.Ldap
 			}
 			
 		}
-		private MessageVector messages;
+		private MessageVector<Message> messages;
 		private int indexLastRead = 0;
 		private static System.Object nameLock; // protect agentNum
 		private static int agentNum = 0; // Debug, agent number
@@ -134,7 +135,7 @@ namespace Novell.Directory.Ldap
 		/* package */
 		internal void  merge(MessageAgent fromAgent)
 		{
-			System.Object[] msgs = fromAgent.MessageArray;
+			var msgs = fromAgent.MessageArray;
 			for (int i = 0; i < msgs.Length; i++)
 			{
 				messages.Add(msgs[i]);
@@ -320,13 +321,21 @@ namespace Novell.Directory.Ldap
 			message.sendMessage(); // Now send message to server
 			return ;
 		}
-		
-		/// <summary> Returns a response queued, or waits if none queued
-		/// 
-		/// </summary>
-		/* package */
-//		internal System.Object getLdapMessage(System.Int32 msgId)
-		internal System.Object getLdapMessage(System.Int32 msgId)
+        internal Task<LdapMessage> sendMessage(ConnectionV2 conn, LdapMessage msg, int timeOut, LdapMessageQueue queue, BindProperties bindProps)
+        {
+            // creating a messageInfo causes the message to be sent
+            // and a timer to be started if needed.
+            //Message message = new Message(msg, timeOut, conn, this, queue, bindProps);
+            //messages.Add(message);
+            //message.sendMessage(); // Now send message to server
+            return conn.ProcessMessage(msg);
+        }
+        /// <summary> Returns a response queued, or waits if none queued
+        /// 
+        /// </summary>
+        /* package */
+        //		internal System.Object getLdapMessage(System.Int32 msgId)
+        internal System.Object getLdapMessage(System.Int32 msgId)
 		{
 			return (getLdapMessage(new Integer32(msgId)));
 		}

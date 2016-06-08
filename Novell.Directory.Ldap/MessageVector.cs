@@ -40,7 +40,7 @@ namespace Novell.Directory.Ldap
 	/// to Vector needed for handling messages.
 	/// </summary>
 	/* package */
-	class MessageVector:List<Message>
+	class MessageVector<T>:List<T> where T:class
 	{
 		/// <summary>Returns an array containing all of the elements in this MessageVector.
 		/// The elements returned are in the same order in the array as in the
@@ -49,17 +49,17 @@ namespace Novell.Directory.Ldap
 		/// </summary>
 		/// <returns> the array containing all of the elements.
 		/// </returns>
-		virtual internal Message[] ObjectArray
+		virtual internal T[] ObjectArray
 		{
 			get
 			{
 			    lock (this)
 			    {
-			        var results = new Message[Count];
+			        var results = new T[Count];
 			        Array.Copy(ToArray(), 0, results, 0, Count);
 			        for (var i = 0; i < Count; i++)
 			        {
-			            ToArray()[i] = null;
+			            ToArray()[i] = default(T);
 			        }
 			        //Count = 0;
 			        return results;
@@ -85,11 +85,17 @@ namespace Novell.Directory.Ldap
 		/// value for the MsgId field can be found.
 		/// </returns>
 		/* package */
-		internal Message FindMessageById(int msgId)
+		internal T FindMessageById(int msgId)
 		{
 		    lock (this)
 		    {
-		        return this.Single(message => message.MessageID == msgId);
+                // Temp stuff
+		        if (typeof (T) == typeof (Message))
+		        {
+		            var result = this.OfType<Message>().Single(message => message.MessageID == msgId);
+                    return result as T;
+                }
+		        return default(T);
 		    }
 		}
 	}

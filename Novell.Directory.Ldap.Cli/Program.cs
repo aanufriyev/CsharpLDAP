@@ -11,7 +11,8 @@ namespace Novell.Directory.Ldap.Cli
         {
             SimpleBindSucceedes();
             SecureLdapBindSucceedes();
-            StartTlsLdapBindSucceedes();
+            SimpleBindSucceedesV2();
+            //StartTlsLdapBindSucceedes();
         }
 
         private static void StartTlsLdapBindSucceedes()
@@ -67,6 +68,28 @@ namespace Novell.Directory.Ldap.Cli
             try
             {
                 LdapConnection conn = new LdapConnection();
+                conn.Connect("localhost", 10389);
+                conn.Bind("uid=admin,ou=system", "secret");
+                Console.WriteLine(" Bind Successfull");
+                conn.Disconnect();
+            }
+            catch (LdapException e)
+            {
+                Console.WriteLine("Error:" + e.LdapErrorMessage);
+                return;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error:" + e.Message);
+                return;
+            }
+        }
+
+        private static void SimpleBindSucceedesV2()
+        {
+            try
+            {
+                var conn = new LdapConnectionV2();
                 conn.Connect("localhost", 10389);
                 conn.Bind("uid=admin,ou=system", "secret");
                 Console.WriteLine(" Bind Successfull");

@@ -82,7 +82,8 @@ namespace Novell.Directory.Ldap.Utilclass
 		}
 //		private DirectoryEntry conn;
 		private LdapConnection conn;
-		private LdapUrl referralUrl;
+        private LdapConnectionV2 connv2;
+        private LdapUrl referralUrl;
 		private System.String[] referralList;
 		
 		/// <summary> Construct the ReferralInfo class
@@ -100,5 +101,12 @@ namespace Novell.Directory.Ldap.Utilclass
 			referralList = refList;
 			return ;
 		}
-	}
+        public ReferralInfo(LdapConnectionV2 lc, System.String[] refList, LdapUrl refUrl)
+        {
+            connv2 = lc;
+            referralUrl = refUrl;
+            referralList = refList;
+            return;
+        }
+    }
 }

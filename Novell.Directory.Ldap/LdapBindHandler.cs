@@ -86,5 +86,7 @@ namespace Novell.Directory.Ldap
 			/// with appropriate fields set to give the reason for the failure.
 			/// </exception>
 			LdapConnection Bind(System.String[] ldapurl, LdapConnection conn);
-		}
+
+            LdapConnectionV2 Bind(System.String[] ldapurl, LdapConnectionV2 conn);
+    }
 }
