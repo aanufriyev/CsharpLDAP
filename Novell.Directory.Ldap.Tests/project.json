@@ -5,12 +5,14 @@
       "type": "platform",
       "version": "1.0.0-rc2-3002702"
     },
-    "xunit": "2.1.0",
-    "Novell.Directory.LDAP": {"target": "project"}
+    "xunit": "2.1.0"
   },
 
   "frameworks": {
     "netstandard1.5": {
+      "dependencies": {
+        "Novell.Directory.Ldap": { "target": "project" }
+      },
       "imports": [
         "dnxcore50",
         "netstandard1.5",

@@ -3,17 +3,17 @@
   "buildOptions": {
     "emitEntryPoint": true
   },
-
   "dependencies": {
     "Microsoft.NETCore.App": {
       "type": "platform",
       "version": "1.0.0-rc2-3002702"
-    },
-    "Novell.Directory.LDAP": {"target": "project"}
-    },
-
+    }
+  },
   "frameworks": {
     "netstandard1.5": {
+      "dependencies": {
+        "Novell.Directory.Ldap": { "target": "project" }
+      },
       "imports": [
         "dnxcore50",
         "netstandard1.5",

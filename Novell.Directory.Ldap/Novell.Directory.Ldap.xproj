@@ -6,8 +6,8 @@
   </PropertyGroup>
   <Import Project="$(VSToolsPath)\DotNet\Microsoft.DotNet.Props" Condition="'$(VSToolsPath)' != ''" />
   <PropertyGroup Label="Globals">
-    <ProjectGuid>8ca1450c-47b3-4834-87d9-42b365f14130</ProjectGuid>
-    <RootNamespace>Novell.Directory.LDAP</RootNamespace>
+    <ProjectGuid>1d29475a-44ab-43ab-ab36-e868e6973033</ProjectGuid>
+    <RootNamespace>Novell.Directory.Ldap</RootNamespace>
     <BaseIntermediateOutputPath Condition="'$(BaseIntermediateOutputPath)'=='' ">.\obj</BaseIntermediateOutputPath>
     <OutputPath Condition="'$(OutputPath)'=='' ">.\bin\</OutputPath>
   </PropertyGroup>
