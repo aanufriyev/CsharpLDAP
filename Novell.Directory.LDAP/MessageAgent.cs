@@ -205,7 +205,7 @@ namespace Novell.Directory.Ldap
 		{
 			try
 			{
-				Message info = messages.findMessageById(msgId);
+				Message info = messages.FindMessageById(msgId);
 				return info.hasReplies();
 			}
 			catch (System.FieldAccessException ex)
@@ -230,7 +230,7 @@ namespace Novell.Directory.Ldap
 			try
 			{
 				// Send abandon request and remove from connection list
-				info = messages.findMessageById(msgId);
+				info = messages.FindMessageById(msgId);
 				SupportClass.VectorRemoveElement(messages, info); // This message is now dead
 				info.Abandon(cons, null);
 				
@@ -269,7 +269,7 @@ namespace Novell.Directory.Ldap
 		{
 			try
 			{
-				Message info = messages.findMessageById(msgid);
+				Message info = messages.FindMessageById(msgid);
 				if (!info.Complete)
 				{
 					return false;
@@ -290,7 +290,7 @@ namespace Novell.Directory.Ldap
 		/* package */
 		internal Message getMessage(int msgid)
 		{
-			return messages.findMessageById(msgid);
+			return messages.FindMessageById(msgid);
 		}
 		
 		/// <summary> Send a request to the server.  A Message class is created
@@ -346,7 +346,7 @@ namespace Novell.Directory.Ldap
 				{
 					// Get message for this ID
 //					Message info = messages.findMessageById(msgId);
-					Message info = messages.findMessageById(msgId.intValue);
+					Message info = messages.FindMessageById(msgId.intValue);
 					rfcMsg = info.waitForReply(); // blocks for a response
 					if (!info.acceptsReplies() && !info.hasReplies())
 					{

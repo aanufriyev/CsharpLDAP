@@ -33,12 +33,14 @@ using System;
 
 namespace Novell.Directory.Ldap
 {
-	
-	/// <summary> The <code>MessageVector</code> class implements additional semantics
+    using System.Collections.Generic;
+    using System.Linq;
+
+    /// <summary> The <code>MessageVector</code> class implements additional semantics
 	/// to Vector needed for handling messages.
 	/// </summary>
 	/* package */
-	class MessageVector:System.Collections.ArrayList
+	class MessageVector:List<Message>
 	{
 		/// <summary>Returns an array containing all of the elements in this MessageVector.
 		/// The elements returned are in the same order in the array as in the
@@ -47,27 +49,24 @@ namespace Novell.Directory.Ldap
 		/// </summary>
 		/// <returns> the array containing all of the elements.
 		/// </returns>
-		virtual internal System.Object[] ObjectArray
+		virtual internal Message[] ObjectArray
 		{
-			/* package */
-			
 			get
 			{
-				lock (this)
-				{
-					System.Object[] results = new System.Object[Count];
-					Array.Copy((System.Array) ToArray(), 0, (System.Array) results, 0, Count);
-					for (int i = 0; i < Count; i++)
-					{
-						ToArray()[i] = null;
-					}
-//					Count = 0;
-					return results;
-				}
+			    lock (this)
+			    {
+			        var results = new Message[Count];
+			        Array.Copy(ToArray(), 0, results, 0, Count);
+			        for (var i = 0; i < Count; i++)
+			        {
+			            ToArray()[i] = null;
+			        }
+			        //Count = 0;
+			        return results;
+			    }
 			}
 			
 		}
-		/* package */
 		internal MessageVector(int cap, int incr):base(cap)
 		{
 			return ;
@@ -86,26 +85,12 @@ namespace Novell.Directory.Ldap
 		/// value for the MsgId field can be found.
 		/// </returns>
 		/* package */
-		internal Message findMessageById(int msgId)
+		internal Message FindMessageById(int msgId)
 		{
-			lock (this)
-			{
-				Message msg = null;
-				for (int i = 0; i < Count; i++)
-				{
-					//if ((msg = (Message) ToArray()[i]) == null)
-
-					if ((msg = (Message)(this[i])) == null)
-					{
-						throw new System.FieldAccessException();
-					}
-					if (msg.MessageID == msgId)
-					{
-						return msg;
-					}
-				}
-				throw new System.FieldAccessException();
-			}
+		    lock (this)
+		    {
+		        return this.Single(message => message.MessageID == msgId);
+		    }
 		}
 	}
 }

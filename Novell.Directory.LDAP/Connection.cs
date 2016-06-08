@@ -1070,7 +1070,7 @@ namespace Novell.Directory.Ldap
 		/* package */
 		internal MessageAgent getMessageAgent(int msgId)
 		{
-			Message info = messages.findMessageById(msgId);
+			Message info = messages.FindMessageById(msgId);
 			return info.MessageAgent;
 		}
 		
@@ -1569,7 +1569,7 @@ namespace Novell.Directory.Ldap
 						// has been abandoned. If abandoned, throw it away
 						try
 						{
-							info = this.enclosingInstance.messages.findMessageById(msgId);
+							info = this.enclosingInstance.messages.FindMessageById(msgId);
 							info.putReply(msg); // queue & wake up waiting thread
 						}
 						catch (System.FieldAccessException ex)
