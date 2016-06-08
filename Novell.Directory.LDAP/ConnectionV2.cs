@@ -1403,7 +1403,6 @@ namespace Novell.Directory.Ldap
         }
         static ConnectionV2()
         {
-            nameLock = new object();
             Sdk = new System.Text.StringBuilder("2.2.1").ToString();
             Protocol = 3;
         }
