@@ -772,7 +772,7 @@ namespace Novell.Directory.Ldap
             if (Connected)
             {
                 var msg = info.Request;
-                writeMessage(msg);
+                ProcessMessage(msg);
             }
             var errorcount = 0;
             for (errorcount = 0; errorcount < contents.Length; errorcount++)
@@ -877,6 +877,8 @@ namespace Novell.Directory.Ldap
                         //info.putReply(msg); // queue & wake up waiting thread
                         var response = getResponse(msg);
                         isSet = true;
+                        info = _messages.FindMessageById(msgId);
+                        info.putReply(msg); // queue & wake up waiting thread
                         completionSource.SetResult(response);
 
                     }
@@ -1188,6 +1190,7 @@ namespace Novell.Directory.Ldap
         /* package */
         internal void StartReader()
         {
+            _readerTask = Task.Run(() => new ReaderThread(this).Run());
             // Start Reader Thread
             var r = new Thread(new ReaderThread(this).Run) { IsBackground = true };
             // If the last thread running, allow exit.
