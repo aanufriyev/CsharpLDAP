@@ -9,22 +9,23 @@ namespace Novell.Directory.Ldap.Cli
     {
         public static void Main(string[] args)
         {
-            SimpleBindSucceedes();
-            SecureLdapBindSucceedes();
-            StartTlsLdapBindSucceedes();
+            SimpleBindSucceedes().Wait();
+            SecureLdapBindSucceedes().Wait();
+            StartTlsLdapBindSucceedes().Wait();
         }
 
-        private static void StartTlsLdapBindSucceedes()
+        private static async Task StartTlsLdapBindSucceedes()
         {
             try
             {
                 LdapConnection conn = new LdapConnection();
                 
-                conn.Connect("localhost", 10389);
-                conn.startTLS();
+                await conn.ConnectAsync("localhost", 10389);
+                conn.StartTls();
                 conn.Bind("uid=admin,ou=system", "secret");
-                Console.WriteLine(" Bind Successfull");
-                conn.stopTLS();
+                var entry = conn.Read("uid=admin,ou=system");
+                Console.WriteLine("Bind Successfull");
+                conn.StopTls();
                 conn.Disconnect();
             }
             catch (LdapException e)
@@ -39,13 +40,13 @@ namespace Novell.Directory.Ldap.Cli
             }
         }
 
-        private static void SecureLdapBindSucceedes()
+        private static async Task SecureLdapBindSucceedes()
         {
             try
             {
                 LdapConnection conn = new LdapConnection();
                 conn.SecureSocketLayer = true;
-                conn.Connect("localhost", 10636);
+                await conn.ConnectAsync("localhost", 10636);
                 conn.Bind("uid=admin,ou=system", "secret");
                 Console.WriteLine(" Bind Successfull");
                 conn.Disconnect();
@@ -62,12 +63,12 @@ namespace Novell.Directory.Ldap.Cli
             }
         }
 
-        private static void SimpleBindSucceedes()
+        private static async Task SimpleBindSucceedes()
         {
             try
             {
                 LdapConnection conn = new LdapConnection();
-                conn.Connect("localhost", 10389);
+                await conn.ConnectAsync("localhost", 10389);
                 conn.Bind("uid=admin,ou=system", "secret");
                 Console.WriteLine(" Bind Successfull");
                 conn.Disconnect();

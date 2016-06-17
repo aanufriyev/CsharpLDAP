@@ -39,8 +39,9 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace Novell.Directory.Ldap
 {
-	
-	/// <summary> The central class that encapsulates the connection
+    using System.Threading.Tasks;
+
+    /// <summary> The central class that encapsulates the connection
 	/// to a directory server through the Ldap protocol.
 	/// LdapConnection objects are used to perform common Ldap
 	/// operations such as search, modify and add.
@@ -62,8 +63,8 @@ namespace Novell.Directory.Ldap
 	{
 		private void  InitBlock()
 		{
-			defSearchCons = new LdapSearchConstraints();
-			responseCtlSemaphore = new System.Object();
+			_defSearchCons = new LdapSearchConstraints();
+			_responseCtlSemaphore = new object();
 		}
 		/// <summary> Returns the protocol version uses to authenticate.
 		/// 
@@ -78,12 +79,8 @@ namespace Novell.Directory.Ldap
 		{
 			get
 			{
-				BindProperties prop = conn.BindProperties;
-				if (prop == null)
-				{
-					return Ldap_V3;
-				}
-				return prop.ProtocolVersion;
+				var prop = _conn.BindProperties;
+				return prop?.ProtocolVersion ?? LdapV3;
 			}
 			
 		}
@@ -96,11 +93,11 @@ namespace Novell.Directory.Ldap
 		/// <returns> The distinguished name if authenticated; otherwise, null.
 		/// 
 		/// </returns>
-		virtual public System.String AuthenticationDN
+		virtual public string AuthenticationDn
 		{
 			get
 			{
-				BindProperties prop = conn.BindProperties;
+				var prop = _conn.BindProperties;
 				if (prop == null)
 				{
 					return null;
@@ -129,16 +126,16 @@ namespace Novell.Directory.Ldap
 		/// </summary>
 		/// <returns> The method used to authenticate the connection.
 		/// </returns>
-		virtual public System.String AuthenticationMethod
+		virtual public string AuthenticationMethod
 		{
 			get
 			{
-				BindProperties prop = conn.BindProperties;
+				var prop = _conn.BindProperties;
 				if (prop == null)
 				{
 					return "simple";
 				}
-				return conn.BindProperties.AuthenticationMethod;
+				return _conn.BindProperties.AuthenticationMethod;
 			}
 			
 		}
@@ -157,12 +154,12 @@ namespace Novell.Directory.Ldap
 		{
 			get
 			{
-				BindProperties prop = conn.BindProperties;
+				var prop = _conn.BindProperties;
 				if (prop == null)
 				{
 					return null;
 				}
-				return conn.BindProperties.SaslBindProperties;
+				return _conn.BindProperties.SaslBindProperties;
 			}
 			
 		}
@@ -177,16 +174,16 @@ namespace Novell.Directory.Ldap
 		/// object is not present or not authenticated.
 		/// 
 		/// </returns>
-		virtual public System.Object SaslBindCallbackHandler
+		virtual public object SaslBindCallbackHandler
 		{
 			get
 			{
-				BindProperties prop = conn.BindProperties;
+				var prop = _conn.BindProperties;
 				if (prop == null)
 				{
 					return null;
 				}
-				return conn.BindProperties.SaslCallbackHandler;
+				return _conn.BindProperties.SaslCallbackHandler;
 			}
 			
 		}
@@ -218,7 +215,7 @@ namespace Novell.Directory.Ldap
 		{
 			get
 			{
-				return (LdapConstraints) (this.defSearchCons).Clone();
+				return (LdapConstraints) (_defSearchCons).Clone();
 			}
 			
 			set
@@ -226,29 +223,28 @@ namespace Novell.Directory.Ldap
 				// Set all constraints, replace the object with a new one
 				if (value is LdapSearchConstraints)
 				{
-					defSearchCons = (LdapSearchConstraints) value.Clone();
+					_defSearchCons = (LdapSearchConstraints) value.Clone();
 					return ;
 				}
 				
 				// We set the constraints this way, so a thread doesn't get an
 				// conconsistant view of the referrals.
-				LdapSearchConstraints newCons = (LdapSearchConstraints) defSearchCons.Clone();
+				var newCons = (LdapSearchConstraints) _defSearchCons.Clone();
 				newCons.HopLimit = value.HopLimit;
 				newCons.TimeLimit = value.TimeLimit;
 				newCons.setReferralHandler(value.getReferralHandler());
 				newCons.ReferralFollowing = value.ReferralFollowing;
-				LdapControl[] lsc = value.getControls();
+				var lsc = value.getControls();
 				if (lsc != null)
 				{
 					newCons.setControls(lsc);
 				}
-				System.Collections.Hashtable lp = newCons.Properties;
+				var lp = newCons.Properties;
 				if (lp != null)
 				{
 					newCons.Properties = lp;
 				}
-				defSearchCons = newCons;
-				return ;
+				_defSearchCons = newCons;
 			}
 			
 		}
@@ -260,11 +256,11 @@ namespace Novell.Directory.Ldap
 		/// connected or null if the object has never connected.
 		/// 
 		/// </returns>
-		virtual public System.String Host
+		virtual public string Host
 		{
 			get
 			{
-				return conn.Host;
+				return _conn.Host;
 			}
 			
 		}
@@ -280,7 +276,7 @@ namespace Novell.Directory.Ldap
 		{
 			get
 			{
-				return conn.Port;
+				return _conn.Port;
 			}
 			
 		}
@@ -302,7 +298,7 @@ namespace Novell.Directory.Ldap
 		{
 			get
 			{
-				return (LdapSearchConstraints) this.defSearchCons.Clone();
+				return (LdapSearchConstraints) _defSearchCons.Clone();
 			}
 			
 		}
@@ -319,11 +315,11 @@ namespace Novell.Directory.Ldap
                 {
 			get
 			{
-				return conn.Ssl;
+				return _conn.Ssl;
 			}
 			set
                         {
-				conn.Ssl=value;
+				_conn.Ssl=value;
                         }
                 }
 
@@ -342,7 +338,7 @@ namespace Novell.Directory.Ldap
 		{
 			get
 			{
-				return conn.Bound;
+				return _conn.Bound;
 			}
 			
 		}
@@ -356,7 +352,7 @@ namespace Novell.Directory.Ldap
 		{
 			get
 			{
-				return conn.Connected;
+				return _conn.Connected;
 			}
 			
 		}
@@ -370,11 +366,11 @@ namespace Novell.Directory.Ldap
         	/// <returns>  True if the connection is protected by TLS.
         	///
         	/// </returns>
-        	virtual public bool TLS
+        	virtual public bool Tls
         	{
             		get
             		{
-		                return conn.TLS;
+		                return _conn.Tls;
             		}
             
         	}
@@ -398,7 +394,7 @@ namespace Novell.Directory.Ldap
 		{
 			get
 			{
-				if (responseCtls == null)
+				if (_responseCtls == null)
 				{
 					return null;
 				}
@@ -407,17 +403,17 @@ namespace Novell.Directory.Ldap
 				// We have to clone the control just in case
 				// we have two client threads that end up retreiving the
 				// same control.
-				LdapControl[] clonedControl = new LdapControl[responseCtls.Length];
+				var clonedControl = new LdapControl[_responseCtls.Length];
 				
 				// Also note we synchronize access to the local response
 				// control object just in case another message containing controls
 				// comes in from the server while we are busy duplicating
 				// this one.
-				lock (responseCtlSemaphore)
+				lock (_responseCtlSemaphore)
 				{
-					for (int i = 0; i < responseCtls.Length; i++)
+					for (var i = 0; i < _responseCtls.Length; i++)
 					{
-						clonedControl[i] = (LdapControl) (responseCtls[i]).Clone();
+						clonedControl[i] = (LdapControl) (_responseCtls[i]).Clone();
 					}
 				}
 				
@@ -439,7 +435,7 @@ namespace Novell.Directory.Ldap
 			
 			get
 			{
-				return conn;
+				return _conn;
 			}
 			
 		}
@@ -448,62 +444,62 @@ namespace Novell.Directory.Ldap
 		/// </summary>
 		/// <returns> the Connection object name
 		/// </returns>
-		virtual internal System.String ConnectionName
+		virtual internal string ConnectionName
 		{
 			/* package */
 			
 			get
 			{
-				return name;
+				return _name;
 			}
 			
 		}
-		private LdapSearchConstraints defSearchCons;
-		private LdapControl[] responseCtls = null;
+		private LdapSearchConstraints _defSearchCons;
+		private LdapControl[] _responseCtls = null;
 		
 		// Synchronization Object used to synchronize access to responseCtls
-		private System.Object responseCtlSemaphore;
+		private object _responseCtlSemaphore;
 		
-		private Connection conn = null;
+		private Connection _conn = null;
 		
-		private static System.Object nameLock; // protect agentNum
-		private static int lConnNum = 0; // Debug, LdapConnection number
-		private System.String name; // String name for debug
+		private static object _nameLock; // protect agentNum
+		private static int _lConnNum = 0; // Debug, LdapConnection number
+		private string _name; // String name for debug
 		
 		/// <summary> Used with search to specify that the scope of entrys to search is to
 		/// search only the base obect.
 		/// 
 		/// SCOPE_BASE = 0
 		/// </summary>
-		public const int SCOPE_BASE = 0;
+		public const int ScopeBase = 0;
 		
 		/// <summary> Used with search to specify that the scope of entrys to search is to
 		/// search only the immediate subordinates of the base obect.
 		/// 
 		/// SCOPE_ONE = 1
 		/// </summary>
-		public const int SCOPE_ONE = 1;
+		public const int ScopeOne = 1;
 		
 		/// <summary> Used with search to specify that the scope of entrys to search is to
 		/// search the base object and all entries within its subtree.
 		/// 
 		/// SCOPE_ONE = 2
 		/// </summary>
-		public const int SCOPE_SUB = 2;
+		public const int ScopeSub = 2;
 		
 		/// <summary> Used with search instead of an attribute list to indicate that no
 		/// attributes are to be returned.
 		/// 
 		/// NO_ATTRS = "1.1"
 		/// </summary>
-		public const System.String NO_ATTRS = "1.1";
+		public const string NoAttrs = "1.1";
 		
 		/// <summary> Used with search instead of an attribute list to indicate that all
 		/// attributes are to be returned.
 		/// 
 		/// ALL_USER_ATTRS = "*"
 		/// </summary>
-		public const System.String ALL_USER_ATTRS = "*";
+		public const string AllUserAttrs = "*";
 		
 		/// <summary> Specifies the Ldapv3 protocol version when performing a bind operation.
 		/// 
@@ -516,7 +512,7 @@ namespace Novell.Directory.Ldap
 		/// Ldap_V3 = 3
 		/// 
 		/// </summary>
-		public const int Ldap_V3 = 3;
+		public const int LdapV3 = 3;
 		
 		/// <summary> The default port number for Ldap servers.
 		/// 
@@ -526,7 +522,7 @@ namespace Novell.Directory.Ldap
 		/// DEFAULT_PORT = 389
 		/// 
 		/// </summary>
-		public const int DEFAULT_PORT = 389;
+		public const int DefaultPort = 389;
 		
 		
 		/// <summary> The default SSL port number for Ldap servers.
@@ -536,7 +532,7 @@ namespace Novell.Directory.Ldap
 		/// You can use this identifier to specify the port when establishing
 		/// a an SSL connection to a server..
 		/// </summary>
-		public const int DEFAULT_SSL_PORT = 636;
+		public const int DefaultSslPort = 636;
 		
 		/// <summary> A string that can be passed in to the getProperty method.
 		/// 
@@ -544,7 +540,7 @@ namespace Novell.Directory.Ldap
 		/// 
 		/// You can use this string to request the version of the SDK.
 		/// </summary>
-		public const System.String Ldap_PROPERTY_SDK = "version.sdk";
+		public const string LdapPropertySdk = "version.sdk";
 		
 		/// <summary> A string that can be passed in to the getProperty method.
 		/// 
@@ -553,7 +549,7 @@ namespace Novell.Directory.Ldap
 		/// You can use this string to request the version of the
 		/// Ldap protocol.
 		/// </summary>
-		public const System.String Ldap_PROPERTY_PROTOCOL = "version.protocol";
+		public const string LdapPropertyProtocol = "version.protocol";
 		
 		/// <summary> A string that can be passed in to the getProperty method.
 		/// 
@@ -562,7 +558,7 @@ namespace Novell.Directory.Ldap
 		/// You can use this string to request the type of security
 		/// being used.
 		/// </summary>
-		public const System.String Ldap_PROPERTY_SECURITY = "version.security";
+		public const string LdapPropertySecurity = "version.security";
 		
 		/// <summary> A string that corresponds to the server shutdown notification OID.
 		/// This notification may be used by the server to advise the client that
@@ -571,22 +567,22 @@ namespace Novell.Directory.Ldap
 		/// 
 		/// SERVER_SHUTDOWN_OID = "1.3.6.1.4.1.1466.20036"
 		/// </summary>
-		public const System.String SERVER_SHUTDOWN_OID = "1.3.6.1.4.1.1466.20036";
+		public const string ServerShutdownOid = "1.3.6.1.4.1.1466.20036";
 		
 		/// <summary> The OID string that identifies a StartTLS request and response.</summary>
-		private const System.String START_TLS_OID = "1.3.6.1.4.1.1466.20037";
+		private const string StartTlsOid = "1.3.6.1.4.1.1466.20037";
 		
 
 		public event CertificateValidationCallback UserDefinedServerCertValidationDelegate
 		{
 			add
 			{
-				this.conn.OnCertificateValidation += value;
+				_conn.OnCertificateValidation += value;
 			}
 
 			remove
 			{
-				this.conn.OnCertificateValidation -= value;
+				_conn.OnCertificateValidation -= value;
 			}
 		}
 
@@ -607,8 +603,7 @@ namespace Novell.Directory.Ldap
 		{
 			InitBlock();
 			// Get a unique connection name for debug
-			conn = new Connection();
-			return ;
+			_conn = new Connection();
 		}
 		
 /*		public LdapConnection(X509Certificate cert)
@@ -644,43 +639,43 @@ namespace Novell.Directory.Ldap
 		/// </summary>
 		/// <returns> A of the object.
 		/// </returns>
-		public System.Object Clone()
+		public object Clone()
 		{
 			LdapConnection newClone;
-			System.Object newObj;
+			object newObj;
 			try
 			{
-				newObj = base.MemberwiseClone();
+				newObj = MemberwiseClone();
 				newClone = (LdapConnection) newObj;
 			}
-			catch (System.Exception ce)
+			catch (Exception ce)
 			{
-				throw new System.Exception("Internal error, cannot create clone");
+				throw new Exception("Internal error, cannot create clone");
 			}
-			newClone.conn = conn; // same underlying connection
+			newClone._conn = _conn; // same underlying connection
 			
 			//now just duplicate the defSearchCons and responseCtls
-			if (defSearchCons != null)
+			if (_defSearchCons != null)
 			{
-				newClone.defSearchCons = (LdapSearchConstraints) defSearchCons.Clone();
+				newClone._defSearchCons = (LdapSearchConstraints) _defSearchCons.Clone();
 			}
 			else
 			{
-				newClone.defSearchCons = null;
+				newClone._defSearchCons = null;
 			}
-			if (responseCtls != null)
+			if (_responseCtls != null)
 			{
-				newClone.responseCtls = new LdapControl[responseCtls.Length];
-				for (int i = 0; i < responseCtls.Length; i++)
+				newClone._responseCtls = new LdapControl[_responseCtls.Length];
+				for (var i = 0; i < _responseCtls.Length; i++)
 				{
-					newClone.responseCtls[i] = (LdapControl) responseCtls[i].Clone();
+					newClone._responseCtls[i] = (LdapControl) _responseCtls[i].Clone();
 				}
 			}
 			else
 			{
-				newClone.responseCtls = null;
+				newClone._responseCtls = null;
 			}
-			conn.incrCloneCount(); // Increment the count of clones
+			_conn.IncrCloneCount(); // Increment the count of clones
 			return newObj;
 		}
 		
@@ -697,8 +692,7 @@ namespace Novell.Directory.Ldap
 		~LdapConnection()
 		{
 			// Disconnect did not come from user API call
-			Disconnect(defSearchCons, false);
-			return ;
+			Disconnect(_defSearchCons, false);
 		}
 		
 		/// <summary> Returns a property of a connection object.
@@ -732,14 +726,14 @@ namespace Novell.Directory.Ldap
 		/// </seealso>
 		/// <seealso cref="Object">
 		/// </seealso>
-		public virtual System.Object getProperty(System.String name)
+		public virtual object GetProperty(string name)
 		{
-			if (name.ToUpper().Equals(Ldap_PROPERTY_SDK.ToUpper()))
-				return Connection.sdk;
-			else if (name.ToUpper().Equals(Ldap_PROPERTY_PROTOCOL.ToUpper()))
-				return Connection.protocol;
-			else if (name.ToUpper().Equals(Ldap_PROPERTY_SECURITY.ToUpper()))
-				return Connection.security;
+			if (name.ToUpper().Equals(LdapPropertySdk.ToUpper()))
+				return Connection.Sdk;
+			else if (name.ToUpper().Equals(LdapPropertyProtocol.ToUpper()))
+				return Connection.Protocol;
+			else if (name.ToUpper().Equals(LdapPropertySecurity.ToUpper()))
+				return Connection.Security;
 			else
 			{
 				return null;
@@ -762,7 +756,7 @@ namespace Novell.Directory.Ldap
 		public virtual void  AddUnsolicitedNotificationListener(LdapUnsolicitedNotificationListener listener)
 		{
 			if (listener != null)
-				conn.AddUnsolicitedNotificationListener(listener);
+				_conn.AddUnsolicitedNotificationListener(listener);
 		}
 		
 		
@@ -782,7 +776,7 @@ namespace Novell.Directory.Ldap
 		{
 			
 			if (listener != null)
-				conn.RemoveUnsolicitedNotificationListener(listener);
+				_conn.RemoveUnsolicitedNotificationListener(listener);
 		}
 		
 		/// <summary> Starts Transport Layer Security (TLS) protocol on this connection
@@ -799,38 +793,37 @@ namespace Novell.Directory.Ldap
 		/// 
 		/// </exception>
 
-        public virtual void  startTLS()
+        public virtual void  StartTls()
         {
  
-            LdapMessage startTLS = MakeExtendedOperation(new LdapExtendedOperation(LdapConnection.START_TLS_OID, null), null);
+            var startTls = MakeExtendedOperation(new LdapExtendedOperation(StartTlsOid, null), null);
                                                                                 
-            int tlsID = startTLS.MessageID;
+            var tlsId = startTls.MessageID;
                                                                                 
-            conn.acquireWriteSemaphore(tlsID);
+            _conn.acquireWriteSemaphore(tlsId);
             try
             {
-                if (!conn.areMessagesComplete())
+                if (!_conn.AreMessagesComplete())
                 {
                     throw new LdapLocalException(ExceptionMessages.OUTSTANDING_OPERATIONS, LdapException.OPERATIONS_ERROR);
                 }
                 // Stop reader when response to startTLS request received
-                conn.stopReaderOnReply(tlsID);
+                _conn.StopReaderOnReply(tlsId);
                                                                                 
                 // send tls message
-                LdapResponseQueue queue = SendRequestToServer(startTLS, defSearchCons.TimeLimit, null, null);
+                var queue = SendRequestToServer(startTls, _defSearchCons.TimeLimit, null, null);
                                                                                 
-                LdapExtendedResponse response = (LdapExtendedResponse) queue.getResponse();
+                var response = (LdapExtendedResponse) queue.getResponse();
                 response.chkResultCode();
                                                                                 
-                conn.startTLS();
+                _conn.StartTls();
             }
             finally
             {
                 //Free this semaphore no matter what exceptions get thrown
-                conn.startReader();
-                conn.freeWriteSemaphore(tlsID);
+                _conn.StartReader();
+                _conn.FreeWriteSemaphore(tlsId);
            }
-            return ;
         }
                                                                                 
         /// <summary> Stops Transport Layer Security(TLS) on the LDAPConnection and reverts
@@ -849,33 +842,32 @@ namespace Novell.Directory.Ldap
         /// the application an anonymous connection to the server, as required
         /// by StopTLS</p>
         /// </summary>
-        public virtual void  stopTLS()
+        public virtual void  StopTls()
         {
                                                                                 
-            if (!TLS)
+            if (!Tls)
             {
                 throw new LdapLocalException(ExceptionMessages.NO_STARTTLS, LdapException.OPERATIONS_ERROR);
             }
                                                                                 
-            int semaphoreID = conn.acquireWriteSemaphore();
+            var semaphoreId = _conn.acquireWriteSemaphore();
             try
             {
-                if (!conn.areMessagesComplete())
+                if (!_conn.AreMessagesComplete())
                {
                     throw new LdapLocalException(ExceptionMessages.OUTSTANDING_OPERATIONS, LdapException.OPERATIONS_ERROR);
                 }
                 //stopTLS stops and starts the reader thread for us.
-                conn.stopTLS();
+                _conn.StopTls();
             }
             finally
             {
-                conn.freeWriteSemaphore(semaphoreID);
+                _conn.FreeWriteSemaphore(semaphoreId);
                                                                                 
                 /* Now that the TLS socket is closed, reset everything.  This next
                 line is temporary until JSSE is fixed to properly handle TLS stop */
-                this.Connect(this.Host, this.Port);
+                Connect(Host, Port);
             }
-            return ;
         }
                                                                                 
 
@@ -902,8 +894,7 @@ namespace Novell.Directory.Ldap
 		/// </exception>
 		public virtual void  Abandon(LdapSearchResults results)
 		{
-			Abandon(results, defSearchCons);
-			return ;
+			Abandon(results, _defSearchCons);
 		}
 		
 		/// <summary> 
@@ -925,7 +916,6 @@ namespace Novell.Directory.Ldap
 		public virtual void  Abandon(LdapSearchResults results, LdapConstraints cons)
 		{
 			results.Abandon();
-			return ;
 		}
 		
 		/// <summary> 
@@ -942,8 +932,7 @@ namespace Novell.Directory.Ldap
 		/// </exception>
 		public virtual void  Abandon(int id)
 		{
-			Abandon(id, defSearchCons);
-			return ;
+			Abandon(id, _defSearchCons);
 		}
 		
 		/// <summary>  Abandons an asynchronous operation, using the specified
@@ -967,13 +956,11 @@ namespace Novell.Directory.Ldap
 			// remove it from the queue.
 			try
 			{
-				MessageAgent agent = conn.getMessageAgent(id);
+				var agent = _conn.GetMessageAgent(id);
 				agent.Abandon(id, cons);
-				return ;
 			}
-			catch (System.FieldAccessException ex)
+			catch (FieldAccessException ex)
 			{
-				return ; // Ignore error
 			}
 		}
 		
@@ -993,8 +980,7 @@ namespace Novell.Directory.Ldap
 		/// </exception>
 		public virtual void  Abandon(LdapMessageQueue queue)
 		{
-			Abandon(queue, defSearchCons);
-			return ;
+			Abandon(queue, _defSearchCons);
 		}
 		
 		/// <summary> Abandons all outstanding operations managed by the queue.
@@ -1027,13 +1013,12 @@ namespace Novell.Directory.Ldap
 				{
 					agent = queue.MessageAgent;
 				}
-				int[] msgIds = agent.MessageIDs;
-				for (int i = 0; i < msgIds.Length; i++)
+				var msgIds = agent.MessageIDs;
+				for (var i = 0; i < msgIds.Length; i++)
 				{
 					agent.Abandon(msgIds[i], cons);
 				}
 			}
-			return ;
 		}
 		
 		//*************************************************************************
@@ -1052,8 +1037,7 @@ namespace Novell.Directory.Ldap
 		/// </exception>
 		public virtual void  Add(LdapEntry entry)
 		{
-			Add(entry, defSearchCons);
-			return ;
+			Add(entry, _defSearchCons);
 		}
 		
 		/// <summary> 
@@ -1074,18 +1058,17 @@ namespace Novell.Directory.Ldap
 		
 		public virtual void  Add(LdapEntry entry, LdapConstraints cons)
 		{
-			LdapResponseQueue queue = Add(entry, null, cons);
+			var queue = Add(entry, null, cons);
 			
 			// Get a handle to the add response
-			LdapResponse addResponse = (LdapResponse) (queue.getResponse());
+			var addResponse = (LdapResponse) (queue.getResponse());
 			
 			// Set local copy of responseControls synchronously if there were any
-			lock (responseCtlSemaphore)
+			lock (_responseCtlSemaphore)
 			{
-				responseCtls = addResponse.Controls;
+				_responseCtls = addResponse.Controls;
 			}
-			chkResultCode(queue, cons, addResponse);
-			return ;
+			ChkResultCode(queue, cons, addResponse);
 		}
 		
 		/// <summary> Asynchronously adds an entry to the directory.
@@ -1105,7 +1088,7 @@ namespace Novell.Directory.Ldap
 		/// </exception>
 		public virtual LdapResponseQueue Add(LdapEntry entry, LdapResponseQueue queue)
 		{
-			return Add(entry, queue, defSearchCons);
+			return Add(entry, queue, _defSearchCons);
 		}
 		
 		/// <summary> Asynchronously adds an entry to the directory, using the specified
@@ -1130,16 +1113,16 @@ namespace Novell.Directory.Ldap
 		public virtual LdapResponseQueue Add(LdapEntry entry, LdapResponseQueue queue, LdapConstraints cons)
 		{
 			if (cons == null)
-				cons = defSearchCons;
+				cons = _defSearchCons;
 			
 			// error check the parameters
 			if (entry == null)
 			{
-				throw new System.ArgumentException("The LdapEntry parameter" + " cannot be null");
+				throw new ArgumentException("The LdapEntry parameter" + " cannot be null");
 			}
-			if ((System.Object) entry.DN == null)
+			if ((object) entry.DN == null)
 			{
-				throw new System.ArgumentException("The DN value must be present" + " in the LdapEntry object");
+				throw new ArgumentException("The DN value must be present" + " in the LdapEntry object");
 			}
 			
 			LdapMessage msg = new LdapAddRequest(entry, cons.getControls());
@@ -1182,10 +1165,9 @@ namespace Novell.Directory.Ldap
 		/// message and an Ldap error code.
 		/// 
 		/// </exception>
-		public virtual void  Bind(System.String dn, System.String passwd)
+		public virtual void  Bind(string dn, string passwd)
 		{
-			Bind(Ldap_V3, dn, passwd, defSearchCons);
-			return ;
+			Bind(LdapV3, dn, passwd, _defSearchCons);
 		}
 		
 		/// <summary> Synchronously authenticates to the Ldap server (that the object is
@@ -1223,10 +1205,9 @@ namespace Novell.Directory.Ldap
 		/// message and an Ldap error code.
 		/// 
 		/// </exception>
-		public virtual void  Bind(int version, System.String dn, System.String passwd)
+		public virtual void  Bind(int version, string dn, string passwd)
 		{
-			Bind(version, dn, passwd, defSearchCons);
-			return ;
+			Bind(version, dn, passwd, _defSearchCons);
 		}
 		
 		/// <summary> Synchronously authenticates to the Ldap server (that the object is
@@ -1262,10 +1243,9 @@ namespace Novell.Directory.Ldap
 		/// message and an Ldap error code.
 		/// 
 		/// </exception>
-		public virtual void  Bind(System.String dn, System.String passwd, LdapConstraints cons)
+		public virtual void  Bind(string dn, string passwd, LdapConstraints cons)
 		{
-			Bind(Ldap_V3, dn, passwd, cons);
-			return ;
+			Bind(LdapV3, dn, passwd, cons);
 		}
 		
 		/// <summary> Synchronously authenticates to the Ldap server (that the object is
@@ -1306,15 +1286,15 @@ namespace Novell.Directory.Ldap
 		/// message and an Ldap error code.
 		/// 
 		/// </exception>
-		public virtual void  Bind(int version, System.String dn, System.String passwd, LdapConstraints cons)
+		public virtual void  Bind(int version, string dn, string passwd, LdapConstraints cons)
 		{
 			sbyte[] pw = null;
-			if ((System.Object) passwd != null)
+			if ((object) passwd != null)
 			{
 				try
 				{
-					System.Text.Encoding encoder = System.Text.Encoding.GetEncoding("utf-8"); 
-					byte[] ibytes = encoder.GetBytes(passwd);
+					var encoder = System.Text.Encoding.GetEncoding("utf-8"); 
+					var ibytes = encoder.GetBytes(passwd);
 					pw=SupportClass.ToSByteArray(ibytes);
 
 					//					pw = passwd.getBytes("UTF8");
@@ -1323,11 +1303,10 @@ namespace Novell.Directory.Ldap
 				catch (System.IO.IOException ex)
 				{
 					passwd = null; // Keep no reference to String object
-					throw new System.Exception(ex.ToString());
+					throw new Exception(ex.ToString());
 				}
 			}
 			Bind(version, dn, pw, cons);
-			return ;
 		}
 		
 		/// <summary> Synchronously authenticates to the Ldap server (that the object is
@@ -1359,10 +1338,9 @@ namespace Novell.Directory.Ldap
 		/// message and an Ldap error code.
 		/// </exception>
 		[CLSCompliantAttribute(false)]
-		public virtual void  Bind(int version, System.String dn, sbyte[] passwd)
+		public virtual void  Bind(int version, string dn, sbyte[] passwd)
 		{
-			Bind(version, dn, passwd, defSearchCons);
-			return ;
+			Bind(version, dn, passwd, _defSearchCons);
 		}
 		
 		/// <summary> 
@@ -1398,21 +1376,20 @@ namespace Novell.Directory.Ldap
 		/// message and an Ldap error code.
 		/// </exception>
 		[CLSCompliantAttribute(false)]
-		public virtual void  Bind(int version, System.String dn, sbyte[] passwd, LdapConstraints cons)
+		public virtual void  Bind(int version, string dn, sbyte[] passwd, LdapConstraints cons)
 		{
-			LdapResponseQueue queue = Bind(version, dn, passwd, null, cons);
-			LdapResponse res = (LdapResponse) queue.getResponse();
+			var queue = Bind(version, dn, passwd, null, cons);
+			var res = (LdapResponse) queue.getResponse();
 			if (res != null)
 			{
 				// Set local copy of responseControls synchronously if any
-				lock (responseCtlSemaphore)
+				lock (_responseCtlSemaphore)
 				{
-					responseCtls = res.Controls;
+					_responseCtls = res.Controls;
 				}
 				
-				chkResultCode(queue, cons, res);
+				ChkResultCode(queue, cons, res);
 			}
-			return ;
 		}
 		
 		/// <summary> Asynchronously authenticates to the Ldap server (that the object is
@@ -1450,9 +1427,9 @@ namespace Novell.Directory.Ldap
 		/// message and an Ldap error code.
 		/// </exception>
 		[CLSCompliantAttribute(false)]
-		public virtual LdapResponseQueue Bind(int version, System.String dn, sbyte[] passwd, LdapResponseQueue queue)
+		public virtual LdapResponseQueue Bind(int version, string dn, sbyte[] passwd, LdapResponseQueue queue)
 		{
-			return Bind(version, dn, passwd, queue, defSearchCons);
+			return Bind(version, dn, passwd, queue, _defSearchCons);
 		}
 		
 		/// <summary> Asynchronously authenticates to the Ldap server (that the object is
@@ -1492,14 +1469,14 @@ namespace Novell.Directory.Ldap
 		/// message and an Ldap error code.
 		/// </exception>
 		[CLSCompliantAttribute(false)]
-		public virtual LdapResponseQueue Bind(int version, System.String dn, sbyte[] passwd, LdapResponseQueue queue, LdapConstraints cons)
+		public virtual LdapResponseQueue Bind(int version, string dn, sbyte[] passwd, LdapResponseQueue queue, LdapConstraints cons)
 		{
 			int msgId;
 			BindProperties bindProps;
 			if (cons == null)
-				cons = defSearchCons;
+				cons = _defSearchCons;
 			
-			if ((System.Object) dn == null)
+			if ((object) dn == null)
 			{
 				dn = "";
 			}
@@ -1511,7 +1488,7 @@ namespace Novell.Directory.Ldap
 			if (passwd == null)
 				passwd = new sbyte[]{};
 			
-			bool anonymous = false;
+			var anonymous = false;
 			if (passwd.Length == 0)
 			{
 				anonymous = true; // anonymous, passwd length zero with simple bind
@@ -1524,11 +1501,11 @@ namespace Novell.Directory.Ldap
 			bindProps = new BindProperties(version, dn, "simple", anonymous, null, null);
 			
 			// For bind requests, if not connected, attempt to reconnect
-			if (!conn.Connected)
+			if (!_conn.Connected)
 			{
-				if ((System.Object) conn.Host != null)
+				if (_conn.Host != null)
 				{
-					conn.connect(conn.Host, conn.Port);
+					_conn.connect(_conn.Host, _conn.Port);
 				}
 				else
 				{
@@ -1537,7 +1514,7 @@ namespace Novell.Directory.Ldap
 			}
 			
 			// The semaphore is released when the bind response is queued.
-			conn.acquireWriteSemaphore(msgId);
+			_conn.acquireWriteSemaphore(msgId);
 			
 			return SendRequestToServer(msg, cons.TimeLimit, queue, bindProps);
 		}
@@ -1569,9 +1546,9 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		public virtual bool Compare(System.String dn, LdapAttribute attr)
+		public virtual bool Compare(string dn, LdapAttribute attr)
 		{
-			return Compare(dn, attr, defSearchCons);
+			return Compare(dn, attr, _defSearchCons);
 		}
 		
 		/// <summary> 
@@ -1600,18 +1577,18 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		public virtual bool Compare(System.String dn, LdapAttribute attr, LdapConstraints cons)
+		public virtual bool Compare(string dn, LdapAttribute attr, LdapConstraints cons)
 		{
-			bool ret = false;
+			var ret = false;
 			
-			LdapResponseQueue queue = Compare(dn, attr, null, cons);
+			var queue = Compare(dn, attr, null, cons);
 			
-			LdapResponse res = (LdapResponse) queue.getResponse();
+			var res = (LdapResponse) queue.getResponse();
 			
 			// Set local copy of responseControls synchronously - if there were any
-			lock (responseCtlSemaphore)
+			lock (_responseCtlSemaphore)
 			{
-				responseCtls = res.Controls;
+				_responseCtls = res.Controls;
 			}
 			
 			if (res.ResultCode == LdapException.COMPARE_TRUE)
@@ -1624,7 +1601,7 @@ namespace Novell.Directory.Ldap
 			}
 			else
 			{
-				chkResultCode(queue, cons, res);
+				ChkResultCode(queue, cons, res);
 			}
 			return ret;
 		}
@@ -1658,9 +1635,9 @@ namespace Novell.Directory.Ldap
 		/// </seealso>
 		/// <seealso cref="LdapException.COMPARE_FALSE">
 		/// </seealso>
-		public virtual LdapResponseQueue Compare(System.String dn, LdapAttribute attr, LdapResponseQueue queue)
+		public virtual LdapResponseQueue Compare(string dn, LdapAttribute attr, LdapResponseQueue queue)
 		{
-			return Compare(dn, attr, queue, defSearchCons);
+			return Compare(dn, attr, queue, _defSearchCons);
 		}
 		
 		/// <summary> Asynchronously compares an attribute value with one in the directory,
@@ -1695,21 +1672,21 @@ namespace Novell.Directory.Ldap
 		/// </seealso>
 		/// <seealso cref="LdapException.COMPARE_FALSE">
 		/// </seealso>
-		public virtual LdapResponseQueue Compare(System.String dn, LdapAttribute attr, LdapResponseQueue queue, LdapConstraints cons)
+		public virtual LdapResponseQueue Compare(string dn, LdapAttribute attr, LdapResponseQueue queue, LdapConstraints cons)
 		{
 			if (attr.size() != 1)
 			{
-				throw new System.ArgumentException("compare: Exactly one value " + "must be present in the LdapAttribute");
+				throw new ArgumentException("compare: Exactly one value " + "must be present in the LdapAttribute");
 			}
 			
-			if ((System.Object) dn == null)
+			if ((object) dn == null)
 			{
 				// Invalid parameter
-				throw new System.ArgumentException("compare: DN cannot be null");
+				throw new ArgumentException("compare: DN cannot be null");
 			}
 			
 			if (cons == null)
-				cons = defSearchCons;
+				cons = _defSearchCons;
 			
 			LdapMessage msg = new LdapCompareRequest(dn, attr.Name, attr.ByteValue, cons.getControls());
 			
@@ -1748,73 +1725,111 @@ namespace Novell.Directory.Ldap
 		/// message and an Ldap error code.
 		/// 
 		/// </exception>
-		public virtual void  Connect(System.String host, int port)
+		public virtual void Connect(string host, int port)
 		{
 			// connect doesn't affect other clones
 			// If not a clone, destroys old connection.
 			// Step through the space-delimited list
-			SupportClass.Tokenizer hostList = new SupportClass.Tokenizer(host, " ");
-			System.String address = null;
-			
-			int specifiedPort;
-			int colonIndex; //after the colon is the port
-			while (hostList.HasMoreTokens())
+			var hostList = new SupportClass.Tokenizer(host, " ");
+
+		    while (hostList.HasMoreTokens())
 			{
 				try
 				{
-					specifiedPort = port;
-					address = hostList.NextToken();
-					colonIndex = address.IndexOf((System.Char) ':');
+					var specifiedPort = port;
+					var address = hostList.NextToken();
+					var colonIndex = address.IndexOf(':'); //after the colon is the port
 					if (colonIndex != - 1 && colonIndex + 1 != address.Length)
 					{
 						//parse Port out of address
 						try
 						{
-							specifiedPort = System.Int32.Parse(address.Substring(colonIndex + 1));
+							specifiedPort = int.Parse(address.Substring(colonIndex + 1));
 							address = address.Substring(0, (colonIndex) - (0));
 						}
-						catch (System.Exception e)
+						catch (FormatException)
 						{
-							throw new System.ArgumentException(ExceptionMessages.INVALID_ADDRESS);
+							throw new ArgumentException(ExceptionMessages.INVALID_ADDRESS);
 						}
 					}
 					// This may return a different conn object
 					// Disassociate this clone with the underlying connection.
-					conn = conn.destroyClone(true);
-					conn.connect(address, specifiedPort);
+					_conn = _conn.DestroyClone(true);
+					_conn.connect(address, specifiedPort);
 					break;
 				}
-				catch (LdapException LE)
+				catch (LdapException)
 				{
-					if (!hostList.HasMoreTokens())
-						throw LE;
+				    if (!hostList.HasMoreTokens())
+				    {
+				        throw;
+				    }
 				}
 			}
-			return ;
 		}
-		
-		//*************************************************************************
-		// delete methods
-		//*************************************************************************
-		
-		/// <summary> 
-		/// Synchronously deletes the entry with the specified distinguished name
-		/// from the directory.
-		/// 
-		/// Note: A Delete operation will not remove an entry that contains
-		/// subordinate entries, nor will it dereference alias entries. 
-		/// 
-		/// </summary>
-		/// <param name="dn">     The distinguished name of the entry to delete.
-		/// 
-		/// </param>
-		/// <exception> LdapException A general exception which includes an error
-		/// message and an Ldap error code.
-		/// </exception>
-		public virtual void  Delete(System.String dn)
+        public virtual async Task ConnectAsync(string host, int port)
+        {
+            // connect doesn't affect other clones
+            // If not a clone, destroys old connection.
+            // Step through the space-delimited list
+            var hostList = new SupportClass.Tokenizer(host, " ");
+
+            while (hostList.HasMoreTokens())
+            {
+                try
+                {
+                    var specifiedPort = port;
+                    var address = hostList.NextToken();
+                    var colonIndex = address.IndexOf(':'); //after the colon is the port
+                    if (colonIndex != -1 && colonIndex + 1 != address.Length)
+                    {
+                        //parse Port out of address
+                        try
+                        {
+                            specifiedPort = int.Parse(address.Substring(colonIndex + 1));
+                            address = address.Substring(0, (colonIndex) - (0));
+                        }
+                        catch (FormatException)
+                        {
+                            throw new ArgumentException(ExceptionMessages.INVALID_ADDRESS);
+                        }
+                    }
+                    // This may return a different conn object
+                    // Disassociate this clone with the underlying connection.
+                    _conn = _conn.DestroyClone(true);
+                    await _conn.ConnectAsync(address, specifiedPort);
+                    break;
+                }
+                catch (LdapException)
+                {
+                    if (!hostList.HasMoreTokens())
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+        //*************************************************************************
+        // delete methods
+        //*************************************************************************
+
+        /// <summary> 
+        /// Synchronously deletes the entry with the specified distinguished name
+        /// from the directory.
+        /// 
+        /// Note: A Delete operation will not remove an entry that contains
+        /// subordinate entries, nor will it dereference alias entries. 
+        /// 
+        /// </summary>
+        /// <param name="dn">     The distinguished name of the entry to delete.
+        /// 
+        /// </param>
+        /// <exception> LdapException A general exception which includes an error
+        /// message and an Ldap error code.
+        /// </exception>
+        public virtual void Delete(string dn)
 		{
-			Delete(dn, defSearchCons);
-			return ;
+			Delete(dn, _defSearchCons);
 		}
 		
 		
@@ -1834,20 +1849,19 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		public virtual void  Delete(System.String dn, LdapConstraints cons)
+		public virtual void  Delete(string dn, LdapConstraints cons)
 		{
-			LdapResponseQueue queue = Delete(dn, null, cons);
+			var queue = Delete(dn, null, cons);
 			
 			// Get a handle to the delete response
-			LdapResponse deleteResponse = (LdapResponse) (queue.getResponse());
+			var deleteResponse = (LdapResponse) (queue.getResponse());
 			
 			// Set local copy of responseControls synchronously - if there were any
-			lock (responseCtlSemaphore)
+			lock (_responseCtlSemaphore)
 			{
-				responseCtls = deleteResponse.Controls;
+				_responseCtls = deleteResponse.Controls;
 			}
-			chkResultCode(queue, cons, deleteResponse);
-			return ;
+			ChkResultCode(queue, cons, deleteResponse);
 		}
 		
 		/// <summary> Asynchronously deletes the entry with the specified distinguished name
@@ -1869,9 +1883,9 @@ namespace Novell.Directory.Ldap
 		/// message and an Ldap error code.
 		/// 
 		/// </exception>
-		public virtual LdapResponseQueue Delete(System.String dn, LdapResponseQueue queue)
+		public virtual LdapResponseQueue Delete(string dn, LdapResponseQueue queue)
 		{
-			return Delete(dn, queue, defSearchCons);
+			return Delete(dn, queue, _defSearchCons);
 		}
 		
 		/// <summary> Asynchronously deletes the entry with the specified distinguished name
@@ -1896,16 +1910,16 @@ namespace Novell.Directory.Ldap
 		/// message and an Ldap error code.
 		/// 
 		/// </exception>
-		public virtual LdapResponseQueue Delete(System.String dn, LdapResponseQueue queue, LdapConstraints cons)
+		public virtual LdapResponseQueue Delete(string dn, LdapResponseQueue queue, LdapConstraints cons)
 		{
-			if ((System.Object) dn == null)
+			if ((object) dn == null)
 			{
 				// Invalid DN parameter
-				throw new System.ArgumentException(ExceptionMessages.DN_PARAM_ERROR);
+				throw new ArgumentException(ExceptionMessages.DN_PARAM_ERROR);
 			}
 			
 			if (cons == null)
-				cons = defSearchCons;
+				cons = _defSearchCons;
 			
 			LdapMessage msg = new LdapDeleteRequest(dn, cons.getControls());
 			
@@ -1933,8 +1947,7 @@ namespace Novell.Directory.Ldap
 		public virtual void  Disconnect()
 		{
 			// disconnect from API call
-			Disconnect(defSearchCons, true);
-			return ;
+			Disconnect(_defSearchCons, true);
 		}
 		
 		/// <summary> Synchronously disconnects from the Ldap server.
@@ -1956,7 +1969,6 @@ namespace Novell.Directory.Ldap
 		{
 			// disconnect from API call
 			Disconnect(cons, true);
-			return ;
 		}
 		
 		/// <summary> Synchronously disconnect from the server
@@ -1968,8 +1980,7 @@ namespace Novell.Directory.Ldap
 		{
 			// disconnect doesn't affect other clones
 			// If not a clone, distroys connection
-			conn = conn.destroyClone(how);
-			return ;
+			_conn = _conn.DestroyClone(how);
 		}
 		
 		//*************************************************************************
@@ -1996,7 +2007,7 @@ namespace Novell.Directory.Ldap
 		/// </exception>
 		public virtual LdapExtendedResponse ExtendedOperation(LdapExtendedOperation op)
 		{
-			return ExtendedOperation(op, defSearchCons);
+			return ExtendedOperation(op, _defSearchCons);
 		}
 		
 		/*
@@ -2030,16 +2041,16 @@ namespace Novell.Directory.Ldap
 		{
 			
 			// Call asynchronous API and get back handler to reponse queue
-			LdapResponseQueue queue = ExtendedOperation(op, cons, null);
-			LdapExtendedResponse response = (LdapExtendedResponse) queue.getResponse();
+			var queue = ExtendedOperation(op, cons, null);
+			var response = (LdapExtendedResponse) queue.getResponse();
 			
 			// Set local copy of responseControls synchronously - if there were any
-			lock (responseCtlSemaphore)
+			lock (_responseCtlSemaphore)
 			{
-				responseCtls = response.Controls;
+				_responseCtls = response.Controls;
 			}
 			
-			chkResultCode(queue, cons, response);
+			ChkResultCode(queue, cons, response);
 			return response;
 		}
 		
@@ -2075,7 +2086,7 @@ namespace Novell.Directory.Ldap
 		public virtual LdapResponseQueue ExtendedOperation(LdapExtendedOperation op, LdapResponseQueue queue)
 		{
 			
-			return ExtendedOperation(op, defSearchCons, queue);
+			return ExtendedOperation(op, _defSearchCons, queue);
 		}
 		
 		
@@ -2113,8 +2124,8 @@ namespace Novell.Directory.Ldap
 		{
 			// Use default constraints if none-specified
 			if (cons == null)
-				cons = defSearchCons;
-			LdapMessage msg = MakeExtendedOperation(op, cons);
+				cons = _defSearchCons;
+			var msg = MakeExtendedOperation(op, cons);
 			return SendRequestToServer(msg, cons.TimeLimit, queue, null);
 		}
 		
@@ -2127,13 +2138,13 @@ namespace Novell.Directory.Ldap
 		{
 			// Use default constraints if none-specified
 			if (cons == null)
-				cons = defSearchCons;
+				cons = _defSearchCons;
 			
 			// error check the parameters
-			if ((System.Object) op.getID() == null)
+			if ((object) op.getID() == null)
 			{
 				// Invalid extended operation parameter, no OID specified
-				throw new System.ArgumentException(ExceptionMessages.OP_PARAM_ERROR);
+				throw new ArgumentException(ExceptionMessages.OP_PARAM_ERROR);
 			}
 			
 			return new LdapExtendedRequest(op, cons.getControls());
@@ -2169,10 +2180,9 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		public virtual void  Modify(System.String dn, LdapModification mod)
+		public virtual void  Modify(string dn, LdapModification mod)
 		{
-			Modify(dn, mod, defSearchCons);
-			return ;
+			Modify(dn, mod, _defSearchCons);
 		}
 		
 		/// <summary> 
@@ -2201,12 +2211,11 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		public virtual void  Modify(System.String dn, LdapModification mod, LdapConstraints cons)
+		public virtual void  Modify(string dn, LdapModification mod, LdapConstraints cons)
 		{
-			LdapModification[] mods = new LdapModification[1];
+			var mods = new LdapModification[1];
 			mods[0] = mod;
 			Modify(dn, mods, cons);
-			return ;
 		}
 		
 		/// <summary> 
@@ -2232,10 +2241,9 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		public virtual void  Modify(System.String dn, LdapModification[] mods)
+		public virtual void  Modify(string dn, LdapModification[] mods)
 		{
-			Modify(dn, mods, defSearchCons);
-			return ;
+			Modify(dn, mods, _defSearchCons);
 		}
 		
 		/// <summary> Synchronously makes a set of changes to an existing entry in the
@@ -2263,22 +2271,20 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an
 		/// error message and an Ldap error code.
 		/// </exception>
-		public virtual void  Modify(System.String dn, LdapModification[] mods, LdapConstraints cons)
+		public virtual void  Modify(string dn, LdapModification[] mods, LdapConstraints cons)
 		{
-			LdapResponseQueue queue = Modify(dn, mods, null, cons);
+			var queue = Modify(dn, mods, null, cons);
 			
 			// Get a handle to the modify response
-			LdapResponse modifyResponse = (LdapResponse) (queue.getResponse());
+			var modifyResponse = (LdapResponse) (queue.getResponse());
 			
 			// Set local copy of responseControls synchronously - if there were any
-			lock (responseCtlSemaphore)
+			lock (_responseCtlSemaphore)
 			{
-				responseCtls = modifyResponse.Controls;
+				_responseCtls = modifyResponse.Controls;
 			}
 			
-			chkResultCode(queue, cons, modifyResponse);
-			
-			return ;
+			ChkResultCode(queue, cons, modifyResponse);
 		}
 		
 		/// <summary> Asynchronously makes a single change to an existing entry in the
@@ -2308,9 +2314,9 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		public virtual LdapResponseQueue Modify(System.String dn, LdapModification mod, LdapResponseQueue queue)
+		public virtual LdapResponseQueue Modify(string dn, LdapModification mod, LdapResponseQueue queue)
 		{
-			return Modify(dn, mod, queue, defSearchCons);
+			return Modify(dn, mod, queue, _defSearchCons);
 		}
 		
 		/// <summary> Asynchronously makes a single change to an existing entry in the
@@ -2343,9 +2349,9 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		public virtual LdapResponseQueue Modify(System.String dn, LdapModification mod, LdapResponseQueue queue, LdapConstraints cons)
+		public virtual LdapResponseQueue Modify(string dn, LdapModification mod, LdapResponseQueue queue, LdapConstraints cons)
 		{
-			LdapModification[] mods = new LdapModification[1];
+			var mods = new LdapModification[1];
 			mods[0] = mod;
 			return Modify(dn, mods, queue, cons);
 		}
@@ -2377,9 +2383,9 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		public virtual LdapResponseQueue Modify(System.String dn, LdapModification[] mods, LdapResponseQueue queue)
+		public virtual LdapResponseQueue Modify(string dn, LdapModification[] mods, LdapResponseQueue queue)
 		{
-			return Modify(dn, mods, queue, defSearchCons);
+			return Modify(dn, mods, queue, _defSearchCons);
 		}
 		
 		/// <summary> Asynchronously makes a set of changes to an existing entry in the
@@ -2412,16 +2418,16 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		public virtual LdapResponseQueue Modify(System.String dn, LdapModification[] mods, LdapResponseQueue queue, LdapConstraints cons)
+		public virtual LdapResponseQueue Modify(string dn, LdapModification[] mods, LdapResponseQueue queue, LdapConstraints cons)
 		{
-			if ((System.Object) dn == null)
+			if ((object) dn == null)
 			{
 				// Invalid DN parameter
-				throw new System.ArgumentException(ExceptionMessages.DN_PARAM_ERROR);
+				throw new ArgumentException(ExceptionMessages.DN_PARAM_ERROR);
 			}
 			
 			if (cons == null)
-				cons = defSearchCons;
+				cons = _defSearchCons;
 			
 			LdapMessage msg = new LdapModifyRequest(dn, mods, cons.getControls());
 			
@@ -2444,9 +2450,9 @@ namespace Novell.Directory.Ldap
 		/// </returns>
 		/// <exception> LdapException if the object was not found
 		/// </exception>
-		public virtual LdapEntry Read(System.String dn)
+		public virtual LdapEntry Read(string dn)
 		{
-			return Read(dn, defSearchCons);
+			return Read(dn, _defSearchCons);
 		}
 		
 		
@@ -2467,7 +2473,7 @@ namespace Novell.Directory.Ldap
 		/// </returns>
 		/// <exception> LdapException if the object was not found
 		/// </exception>
-		public virtual LdapEntry Read(System.String dn, LdapSearchConstraints cons)
+		public virtual LdapEntry Read(string dn, LdapSearchConstraints cons)
 		{
 			return Read(dn, null, cons);
 		}
@@ -2488,9 +2494,9 @@ namespace Novell.Directory.Ldap
 		/// </returns>
 		/// <exception> LdapException if the object was not found
 		/// </exception>
-		public virtual LdapEntry Read(System.String dn, System.String[] attrs)
+		public virtual LdapEntry Read(string dn, string[] attrs)
 		{
-			return Read(dn, attrs, defSearchCons);
+			return Read(dn, attrs, _defSearchCons);
 		}
 		
 		/// <summary> Synchronously reads the entry for the specified distinguished name (DN),
@@ -2512,9 +2518,9 @@ namespace Novell.Directory.Ldap
 		/// </returns>
 		/// <exception> LdapException if the object was not found
 		/// </exception>
-		public virtual LdapEntry Read(System.String dn, System.String[] attrs, LdapSearchConstraints cons)
+		public virtual LdapEntry Read(string dn, string[] attrs, LdapSearchConstraints cons)
 		{
-			LdapSearchResults sr = Search(dn, SCOPE_BASE, null, attrs, false, cons);
+			var sr = Search(dn, ScopeBase, null, attrs, false, cons);
 			
 			LdapEntry ret = null;
 			if (sr.hasMore())
@@ -2552,9 +2558,9 @@ namespace Novell.Directory.Ldap
 		/// </exception>
 		public static LdapEntry Read(LdapUrl toGet)
 		{
-			LdapConnection lconn = new LdapConnection();
+			var lconn = new LdapConnection();
 			lconn.Connect(toGet.Host, toGet.Port);
-			LdapEntry toReturn = lconn.Read(toGet.getDN(), toGet.AttributeArray);
+			var toReturn = lconn.Read(toGet.getDN(), toGet.AttributeArray);
 			lconn.Disconnect();
 			return toReturn;
 		}
@@ -2586,9 +2592,9 @@ namespace Novell.Directory.Ldap
 		/// </exception>
 		public static LdapEntry Read(LdapUrl toGet, LdapSearchConstraints cons)
 		{
-			LdapConnection lconn = new LdapConnection();
+			var lconn = new LdapConnection();
 			lconn.Connect(toGet.Host, toGet.Port);
-			LdapEntry toReturn = lconn.Read(toGet.getDN(), toGet.AttributeArray, cons);
+			var toReturn = lconn.Read(toGet.getDN(), toGet.AttributeArray, cons);
 			lconn.Disconnect();
 			return toReturn;
 		}
@@ -2615,10 +2621,9 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		public virtual void  Rename(System.String dn, System.String newRdn, bool deleteOldRdn)
+		public virtual void  Rename(string dn, string newRdn, bool deleteOldRdn)
 		{
-			Rename(dn, newRdn, deleteOldRdn, defSearchCons);
-			return ;
+			Rename(dn, newRdn, deleteOldRdn, _defSearchCons);
 		}
 		
 		/// <summary> 
@@ -2643,11 +2648,10 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		public virtual void  Rename(System.String dn, System.String newRdn, bool deleteOldRdn, LdapConstraints cons)
+		public virtual void  Rename(string dn, string newRdn, bool deleteOldRdn, LdapConstraints cons)
 		{
 			// null for newParentdn means that this is originating as an Ldapv2 call
 			Rename(dn, newRdn, null, deleteOldRdn, cons);
-			return ;
 		}
 		
 		/// <summary> Synchronously renames an existing entry in the directory, possibly
@@ -2672,10 +2676,9 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		public virtual void  Rename(System.String dn, System.String newRdn, System.String newParentdn, bool deleteOldRdn)
+		public virtual void  Rename(string dn, string newRdn, string newParentdn, bool deleteOldRdn)
 		{
-			Rename(dn, newRdn, newParentdn, deleteOldRdn, defSearchCons);
-			return ;
+			Rename(dn, newRdn, newParentdn, deleteOldRdn, _defSearchCons);
 		}
 		
 		/// <summary> 
@@ -2705,21 +2708,20 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		public virtual void  Rename(System.String dn, System.String newRdn, System.String newParentdn, bool deleteOldRdn, LdapConstraints cons)
+		public virtual void  Rename(string dn, string newRdn, string newParentdn, bool deleteOldRdn, LdapConstraints cons)
 		{
-			LdapResponseQueue queue = Rename(dn, newRdn, newParentdn, deleteOldRdn, null, cons);
+			var queue = Rename(dn, newRdn, newParentdn, deleteOldRdn, null, cons);
 			
 			// Get a handle to the rename response
-			LdapResponse renameResponse = (LdapResponse) (queue.getResponse());
+			var renameResponse = (LdapResponse) (queue.getResponse());
 			
 			// Set local copy of responseControls synchronously - if there were any
-			lock (responseCtlSemaphore)
+			lock (_responseCtlSemaphore)
 			{
-				responseCtls = renameResponse.Controls;
+				_responseCtls = renameResponse.Controls;
 			}
 			
-			chkResultCode(queue, cons, renameResponse);
-			return ;
+			ChkResultCode(queue, cons, renameResponse);
 		}
 		
 		/*
@@ -2748,9 +2750,9 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		public virtual LdapResponseQueue Rename(System.String dn, System.String newRdn, bool deleteOldRdn, LdapResponseQueue queue)
+		public virtual LdapResponseQueue Rename(string dn, string newRdn, bool deleteOldRdn, LdapResponseQueue queue)
 		{
-			return Rename(dn, newRdn, deleteOldRdn, queue, defSearchCons);
+			return Rename(dn, newRdn, deleteOldRdn, queue, _defSearchCons);
 		}
 		
 		/// <summary> Asynchronously renames an existing entry in the directory, using the
@@ -2779,7 +2781,7 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		public virtual LdapResponseQueue Rename(System.String dn, System.String newRdn, bool deleteOldRdn, LdapResponseQueue queue, LdapConstraints cons)
+		public virtual LdapResponseQueue Rename(string dn, string newRdn, bool deleteOldRdn, LdapResponseQueue queue, LdapConstraints cons)
 		{
 			return Rename(dn, newRdn, null, deleteOldRdn, queue, cons);
 		}
@@ -2811,9 +2813,9 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		public virtual LdapResponseQueue Rename(System.String dn, System.String newRdn, System.String newParentdn, bool deleteOldRdn, LdapResponseQueue queue)
+		public virtual LdapResponseQueue Rename(string dn, string newRdn, string newParentdn, bool deleteOldRdn, LdapResponseQueue queue)
 		{
-			return Rename(dn, newRdn, newParentdn, deleteOldRdn, queue, defSearchCons);
+			return Rename(dn, newRdn, newParentdn, deleteOldRdn, queue, _defSearchCons);
 		}
 		
 		/// <summary> Asynchronously renames an existing entry in the directory, using the
@@ -2847,16 +2849,16 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		public virtual LdapResponseQueue Rename(System.String dn, System.String newRdn, System.String newParentdn, bool deleteOldRdn, LdapResponseQueue queue, LdapConstraints cons)
+		public virtual LdapResponseQueue Rename(string dn, string newRdn, string newParentdn, bool deleteOldRdn, LdapResponseQueue queue, LdapConstraints cons)
 		{
-			if ((System.Object) dn == null || (System.Object) newRdn == null)
+			if ((object) dn == null || (object) newRdn == null)
 			{
 				// Invalid DN or RDN parameter
-				throw new System.ArgumentException(ExceptionMessages.RDN_PARAM_ERROR);
+				throw new ArgumentException(ExceptionMessages.RDN_PARAM_ERROR);
 			}
 			
 			if (cons == null)
-				cons = defSearchCons;
+				cons = _defSearchCons;
 			
 			LdapMessage msg = new LdapModifyDNRequest(dn, newRdn, newParentdn, deleteOldRdn, cons.getControls());
 			
@@ -2899,9 +2901,9 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		public virtual LdapSearchResults Search(System.String base_Renamed, int scope, System.String filter, System.String[] attrs, bool typesOnly)
+		public virtual LdapSearchResults Search(string baseRenamed, int scope, string filter, string[] attrs, bool typesOnly)
 		{
-			return Search(base_Renamed, scope, filter, attrs, typesOnly, defSearchCons);
+			return Search(baseRenamed, scope, filter, attrs, typesOnly, _defSearchCons);
 		}
 		
 		/// <summary> 
@@ -2948,12 +2950,12 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		public virtual LdapSearchResults Search(System.String base_Renamed, int scope, System.String filter, System.String[] attrs, bool typesOnly, LdapSearchConstraints cons)
+		public virtual LdapSearchResults Search(string baseRenamed, int scope, string filter, string[] attrs, bool typesOnly, LdapSearchConstraints cons)
 		{
-			LdapSearchQueue queue = Search(base_Renamed, scope, filter, attrs, typesOnly, null, cons);
+			var queue = Search(baseRenamed, scope, filter, attrs, typesOnly, null, cons);
 			
 			if (cons == null)
-				cons = defSearchCons;
+				cons = _defSearchCons;
 			return new LdapSearchResults(this, queue, cons);
 		}
 		
@@ -2993,9 +2995,9 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		public virtual LdapSearchQueue Search(System.String base_Renamed, int scope, System.String filter, System.String[] attrs, bool typesOnly, LdapSearchQueue queue)
+		public virtual LdapSearchQueue Search(string baseRenamed, int scope, string filter, string[] attrs, bool typesOnly, LdapSearchQueue queue)
 		{
-			return Search(base_Renamed, scope, filter, attrs, typesOnly, queue, defSearchCons);
+			return Search(baseRenamed, scope, filter, attrs, typesOnly, queue, _defSearchCons);
 		}
 		
 		/// <summary> Asynchronously performs the search specified by the parameters,
@@ -3040,18 +3042,18 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		public virtual LdapSearchQueue Search(System.String base_Renamed, int scope, System.String filter, System.String[] attrs, bool typesOnly, LdapSearchQueue queue, LdapSearchConstraints cons)
+		public virtual LdapSearchQueue Search(string baseRenamed, int scope, string filter, string[] attrs, bool typesOnly, LdapSearchQueue queue, LdapSearchConstraints cons)
 		{
-			if ((System.Object) filter == null)
+			if ((object) filter == null)
 			{
 				filter = "objectclass=*";
 			}
 			if (cons == null)
-				cons = defSearchCons;
+				cons = _defSearchCons;
 			
-			LdapMessage msg = new LdapSearchRequest(base_Renamed, scope, filter, attrs, cons.Dereference, cons.MaxResults, cons.ServerTimeLimit, typesOnly, cons.getControls());
+			LdapMessage msg = new LdapSearchRequest(baseRenamed, scope, filter, attrs, cons.Dereference, cons.MaxResults, cons.ServerTimeLimit, typesOnly, cons.getControls());
 			MessageAgent agent;
-			LdapSearchQueue myqueue = queue;
+			var myqueue = queue;
 			if (myqueue == null)
 			{
 				agent = new MessageAgent();
@@ -3064,7 +3066,7 @@ namespace Novell.Directory.Ldap
 			
 			try
 			{
-				agent.sendMessage(conn, msg, cons.TimeLimit, myqueue, null);
+				agent.sendMessage(_conn, msg, cons.TimeLimit, myqueue, null);
 			}
 			catch (LdapException lex)
 			{
@@ -3125,7 +3127,7 @@ namespace Novell.Directory.Ldap
 		/// </exception>
 		public static LdapSearchResults Search(LdapUrl toGet, LdapSearchConstraints cons)
 		{
-			LdapConnection lconn = new LdapConnection();
+			var lconn = new LdapConnection();
 			lconn.Connect(toGet.Host, toGet.Port);
 			if (cons == null)
 			{
@@ -3138,7 +3140,7 @@ namespace Novell.Directory.Ldap
 				cons = (LdapSearchConstraints) cons.Clone();
 			}
 			cons.BatchSize = 0; // Must wait until all results arrive
-			LdapSearchResults toReturn = lconn.Search(toGet.getDN(), toGet.Scope, toGet.Filter, toGet.AttributeArray, false, cons);
+			var toReturn = lconn.Search(toGet.getDN(), toGet.Scope, toGet.Filter, toGet.AttributeArray, false, cons);
 			lconn.Disconnect();
 			return toReturn;
 		}
@@ -3210,17 +3212,17 @@ namespace Novell.Directory.Ldap
 			
 			if (!request.Request)
 			{
-				throw new System.Exception("Object is not a request message");
+				throw new Exception("Object is not a request message");
 			}
 			
 			if (cons == null)
 			{
-				cons = defSearchCons;
+				cons = _defSearchCons;
 			}
 			
 			// Get the correct queue for a search request
 			MessageAgent agent;
-			LdapMessageQueue myqueue = queue;
+			var myqueue = queue;
 			if (myqueue == null)
 			{
 				agent = new MessageAgent();
@@ -3247,7 +3249,7 @@ namespace Novell.Directory.Ldap
 			
 			try
 			{
-				agent.sendMessage(conn, request, cons.TimeLimit, myqueue, null);
+				agent.sendMessage(_conn, request, cons.TimeLimit, myqueue, null);
 			}
 			catch (LdapException lex)
 			{
@@ -3292,7 +3294,7 @@ namespace Novell.Directory.Ldap
 				agent = queue.MessageAgent;
 			}
 			
-			agent.sendMessage(conn, msg, timeout, queue, bindProps);
+			agent.sendMessage(_conn, msg, timeout, queue, bindProps);
 			return queue;
 		}
 		
@@ -3311,45 +3313,45 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapReferralException A general exception which includes
 		/// an error message and an Ldap error code.
 		/// </exception>
-		private ReferralInfo getReferralConnection(System.String[] referrals)
+		private ReferralInfo GetReferralConnection(string[] referrals)
 		{
 			ReferralInfo refInfo = null;
-			System.Exception ex = null;
+			Exception ex = null;
 			LdapConnection rconn = null;
-			LdapReferralHandler rh = defSearchCons.getReferralHandler();
-			int i = 0;
+			var rh = _defSearchCons.getReferralHandler();
+			var i = 0;
 			// Check if we use LdapRebind to get authentication credentials
 			if ((rh == null) || (rh is LdapAuthHandler))
 			{
 				for (i = 0; i < referrals.Length; i++)
 				{
 					// dn, pw are null in the default case (anonymous bind)
-					System.String dn = null;
+					string dn = null;
 					sbyte[] pw = null;
 					try
 					{
 						rconn = new LdapConnection();
-						rconn.Constraints = defSearchCons;
-						LdapUrl url = new LdapUrl(referrals[i]);
+						rconn.Constraints = _defSearchCons;
+						var url = new LdapUrl(referrals[i]);
 						rconn.Connect(url.Host, url.Port);
 						if (rh != null)
 						{
 							if (rh is LdapAuthHandler)
 							{
 								// Get application supplied dn and pw
-								LdapAuthProvider ap = ((LdapAuthHandler) rh).getAuthProvider(url.Host, url.Port);
+								var ap = ((LdapAuthHandler) rh).getAuthProvider(url.Host, url.Port);
 								dn = ap.DN;
 								pw = ap.Password;
 							}
 						}
-						rconn.Bind(Ldap_V3, dn, pw);
+						rconn.Bind(LdapV3, dn, pw);
 						ex = null;
 						refInfo = new ReferralInfo(rconn, referrals, url);
 						// Indicate this connection created to follow referral
 						rconn.Connection.ActiveReferral = refInfo;
 						break;
 					}
-					catch (System.Exception lex)
+					catch (Exception lex)
 					{
 						if (rconn != null)
 						{
@@ -3376,23 +3378,23 @@ namespace Novell.Directory.Ldap
 					rconn = ((LdapBindHandler) rh).Bind(referrals, this);
 					if (rconn == null)
 					{
-						LdapReferralException rex = new LdapReferralException(ExceptionMessages.REFERRAL_ERROR);
+						var rex = new LdapReferralException(ExceptionMessages.REFERRAL_ERROR);
 						rex.setReferrals(referrals);
 						throw rex;
 					}
 					// Figure out which Url belongs to the connection
-					for (int idx = 0; idx < referrals.Length; idx++)
+					for (var idx = 0; idx < referrals.Length; idx++)
 					{
 						try
 						{
-							LdapUrl url = new LdapUrl(referrals[idx]);
+							var url = new LdapUrl(referrals[idx]);
 							if (url.Host.ToUpper().Equals(rconn.Host.ToUpper()) && (url.Port == rconn.Port))
 							{
 								refInfo = new ReferralInfo(rconn, referrals, url);
 								break;
 							}
 						}
-						catch (System.Exception e)
+						catch (Exception e)
 						{
 							; // ignore
 						}
@@ -3403,7 +3405,7 @@ namespace Novell.Directory.Ldap
 						ex = new LdapLocalException(ExceptionMessages.REFERRAL_BIND_MATCH, LdapException.CONNECT_ERROR);
 					}
 				}
-				catch (System.Exception lex)
+				catch (Exception lex)
 				{
 					rconn = null;
 					ex = lex;
@@ -3423,10 +3425,10 @@ namespace Novell.Directory.Ldap
 				}
 				else
 				{
-					ldapex = new LdapLocalException(ExceptionMessages.SERVER_CONNECT_ERROR, new System.Object[]{conn.Host}, LdapException.CONNECT_ERROR, ex);
+					ldapex = new LdapLocalException(ExceptionMessages.SERVER_CONNECT_ERROR, new object[]{_conn.Host}, LdapException.CONNECT_ERROR, ex);
 				}
 				// Error attempting to follow a referral
-				LdapReferralException rex = new LdapReferralException(ExceptionMessages.REFERRAL_ERROR, ldapex);
+				var rex = new LdapReferralException(ExceptionMessages.REFERRAL_ERROR, ldapex);
 				rex.setReferrals(referrals);
 				// Use last URL string for the failed referral
 				rex.FailedReferral = referrals[referrals.Length - 1];
@@ -3452,7 +3454,7 @@ namespace Novell.Directory.Ldap
 		/// </param>
 		/// <param name="response">- the LdapResponse to check
 		/// </param>
-		private void  chkResultCode(LdapMessageQueue queue, LdapConstraints cons, LdapResponse response)
+		private void  ChkResultCode(LdapMessageQueue queue, LdapConstraints cons, LdapResponse response)
 		{
 			if ((response.ResultCode == LdapException.REFERRAL) && cons.ReferralFollowing)
 			{
@@ -3460,11 +3462,11 @@ namespace Novell.Directory.Ldap
 				System.Collections.ArrayList refConn = null;
 				try
 				{
-					chaseReferral(queue, cons, response, response.Referrals, 0, false, null);
+					ChaseReferral(queue, cons, response, response.Referrals, 0, false, null);
 				}
 				finally
 				{
-					releaseReferralConnections(refConn);
+					ReleaseReferralConnections(refConn);
 				}
 			}
 			else
@@ -3472,7 +3474,6 @@ namespace Novell.Directory.Ldap
 				// Throws exception for non success result
 				response.chkResultCode();
 			}
-			return ;
 		}
 		
 		/// <summary> Follow referrals if necessary referral following enabled.
@@ -3519,9 +3520,9 @@ namespace Novell.Directory.Ldap
 		/// message and an Ldap error code.
 		/// </exception>
 		/* package */
-		internal virtual System.Collections.ArrayList chaseReferral(LdapMessageQueue queue, LdapConstraints cons, LdapMessage msg, System.String[] initialReferrals, int hopCount, bool searchReference, System.Collections.ArrayList connectionList)
+		internal virtual System.Collections.ArrayList ChaseReferral(LdapMessageQueue queue, LdapConstraints cons, LdapMessage msg, string[] initialReferrals, int hopCount, bool searchReference, System.Collections.ArrayList connectionList)
 		{
-			System.Collections.ArrayList connList = connectionList;
+			var connList = connectionList;
 			LdapConnection rconn = null; // new conn for following referral
 			ReferralInfo rinfo = null; // referral info
 			LdapMessage origMsg;
@@ -3532,7 +3533,7 @@ namespace Novell.Directory.Ldap
 				connList = new System.Collections.ArrayList(cons.HopLimit);
 			}
 			// Following referrals or search reference
-			System.String[] refs; // referral list
+			string[] refs; // referral list
 			if (initialReferrals != null)
 			{
 				// Search continuation reference from a search request
@@ -3542,7 +3543,7 @@ namespace Novell.Directory.Ldap
 			else
 			{
 				// Not a search request
-				LdapResponse resp = (LdapResponse) queue.getResponse();
+				var resp = (LdapResponse) queue.getResponse();
 				if (resp.ResultCode != LdapException.REFERRAL)
 				{
 					// Not referral result,throw Exception if nonzero result
@@ -3562,14 +3563,14 @@ namespace Novell.Directory.Ldap
 					throw new LdapLocalException("Max hops exceeded", LdapException.REFERRAL_LIMIT_EXCEEDED);
 				}
 				// Get a connection to follow the referral
-				rinfo = getReferralConnection(refs);
+				rinfo = GetReferralConnection(refs);
 				rconn = rinfo.ReferralConnection;
 				refUrl = rinfo.ReferralUrl;
 				connList.Add(rconn);
 				
 				
 				// rebuild msg into new msg changing msgID,dn,scope,filter
-				LdapMessage newMsg = rebuildRequest(origMsg, refUrl, searchReference);
+				var newMsg = RebuildRequest(origMsg, refUrl, searchReference);
 				
 				
 				// Send new message on new connection
@@ -3584,15 +3585,15 @@ namespace Novell.Directory.Ldap
 					{
 						agent = queue.MessageAgent;
 					}
-					agent.sendMessage(rconn.Connection, newMsg, defSearchCons.TimeLimit, queue, null);
+					agent.sendMessage(rconn.Connection, newMsg, _defSearchCons.TimeLimit, queue, null);
 				}
 				catch (InterThreadException ex)
 				{
 					// Error ending request to referred server
-					LdapReferralException rex = new LdapReferralException(ExceptionMessages.REFERRAL_SEND, LdapException.CONNECT_ERROR, null, ex);
+					var rex = new LdapReferralException(ExceptionMessages.REFERRAL_SEND, LdapException.CONNECT_ERROR, null, ex);
 					rex.setReferrals(initialReferrals);
-					ReferralInfo ref_Renamed = rconn.Connection.ActiveReferral;
-					rex.FailedReferral = ref_Renamed.ReferralUrl.ToString();
+					var refRenamed = rconn.Connection.ActiveReferral;
+					rex.FailedReferral = refRenamed.ReferralUrl.ToString();
 					throw rex;
 				}
 				
@@ -3602,7 +3603,7 @@ namespace Novell.Directory.Ldap
 					// the stack unwinds back to the original and returns
 					// to the application.
 					// An exception is thrown for an error
-					connList = chaseReferral(queue, cons, null, null, hopCount, false, connList);
+					connList = ChaseReferral(queue, cons, null, null, hopCount, false, connList);
 				}
 				else
 				{
@@ -3610,7 +3611,7 @@ namespace Novell.Directory.Ldap
 					return connList;
 				}
 			}
-			catch (System.Exception ex)
+			catch (Exception ex)
 			{
 				
 				if (ex is LdapReferralException)
@@ -3621,7 +3622,7 @@ namespace Novell.Directory.Ldap
 				{
 					
 					// Set referral list and failed referral
-					LdapReferralException rex = new LdapReferralException(ExceptionMessages.REFERRAL_ERROR, ex);
+					var rex = new LdapReferralException(ExceptionMessages.REFERRAL_ERROR, ex);
 					rex.setReferrals(refs);
 					if (rinfo != null)
 					{
@@ -3652,11 +3653,11 @@ namespace Novell.Directory.Ldap
 		/// <exception> LdapException A general exception which includes an error
 		/// message and an Ldap error code.
 		/// </exception>
-		private LdapMessage rebuildRequest(LdapMessage msg, LdapUrl url, bool reference)
+		private LdapMessage RebuildRequest(LdapMessage msg, LdapUrl url, bool reference)
 		{
 			
-			System.String dn = url.getDN(); // new base
-			System.String filter = null;
+			var dn = url.getDN(); // new base
+			string filter = null;
 			
 			switch (msg.Type)
 			{
@@ -3682,7 +3683,7 @@ namespace Novell.Directory.Ldap
 				case LdapMessage.ABANDON_REQUEST: 
 				case LdapMessage.UNBIND_REQUEST: 
 				default: 
-					throw new LdapLocalException(ExceptionMessages.IMPROPER_REFERRAL, new System.Object[]{msg.Type}, LdapException.LOCAL_ERROR);
+					throw new LdapLocalException(ExceptionMessages.IMPROPER_REFERRAL, new object[]{msg.Type}, LdapException.LOCAL_ERROR);
 			}
 			
 			return msg.Clone(dn, filter, reference);
@@ -3694,14 +3695,14 @@ namespace Novell.Directory.Ldap
 		* @param list the list of the connections
 		*/
 		/* package */
-		internal virtual void  releaseReferralConnections(System.Collections.ArrayList list)
+		internal virtual void  ReleaseReferralConnections(System.Collections.ArrayList list)
 		{
 			if (list == null)
 			{
 				return ;
 			}
 			// Release referral connections
-			for (int i = list.Count - 1; i >= 0; i--)
+			for (var i = list.Count - 1; i >= 0; i--)
 			{
 				LdapConnection rconn = null;
 				try
@@ -3711,16 +3712,13 @@ namespace Novell.Directory.Ldap
 //					rconn = (LdapConnection) list.RemoveAt(i);
 					rconn.Disconnect();
 				}
-				catch (System.IndexOutOfRangeException ex)
+				catch (IndexOutOfRangeException ex)
 				{
-					continue;
 				}
 				catch (LdapException lex)
 				{
-					continue;
 				}
 			}
-			return ;
 		}
 
 		//*************************************************************************
@@ -3733,7 +3731,7 @@ namespace Novell.Directory.Ldap
 		/// getSchemaDN method of LDAPConnection
 		/// 
 		/// </summary>
-		/// <param name="schemaDN">The schema DN used to fetch the schema.
+		/// <param name="schemaDn">The schema DN used to fetch the schema.
 		/// 
 		/// </param>
 		/// <returns>    An LDAPSchema entry containing schema attributes.  If the
@@ -3748,9 +3746,9 @@ namespace Novell.Directory.Ldap
 		/// </seealso>
 		/// <seealso cref="GetSchemaDN(String)">
 		/// </seealso>
-		public virtual LdapSchema FetchSchema(System.String schemaDN)
+		public virtual LdapSchema FetchSchema(string schemaDn)
 		{
-			LdapEntry ent = Read(schemaDN, LdapSchema.schemaTypeNames);
+			var ent = Read(schemaDn, LdapSchema.schemaTypeNames);
 			return new LdapSchema(ent);
 		}
 		
@@ -3777,7 +3775,7 @@ namespace Novell.Directory.Ldap
 		/// </seealso>
 		/// <seealso cref="Modify">
 		/// </seealso>
-		public virtual System.String GetSchemaDN()
+		public virtual string GetSchemaDN()
 		{
 			return GetSchemaDN("");
 		}
@@ -3807,23 +3805,23 @@ namespace Novell.Directory.Ldap
 		/// </seealso>
 		/// <seealso cref="Modify">
 		/// </seealso>
-		public virtual System.String GetSchemaDN(System.String dn)
+		public virtual string GetSchemaDN(string dn)
 		{
-			System.String[] attrSubSchema = new System.String[]{"subschemaSubentry"};
+			var attrSubSchema = new string[]{"subschemaSubentry"};
 			
 			/* Read the entries subschemaSubentry attribute. Throws an exception if
 			* no entries are returned. */
-			LdapEntry ent = this.Read(dn, attrSubSchema);
+			var ent = Read(dn, attrSubSchema);
 			
-			LdapAttribute attr = ent.getAttribute(attrSubSchema[0]);
-			System.String[] values = attr.StringValueArray;
+			var attr = ent.getAttribute(attrSubSchema[0]);
+			var values = attr.StringValueArray;
 			if (values == null || values.Length < 1)
 			{
-				throw new LdapLocalException(ExceptionMessages.NO_SCHEMA, new System.Object[]{dn}, LdapException.NO_RESULTS_RETURNED);
+				throw new LdapLocalException(ExceptionMessages.NO_SCHEMA, new object[]{dn}, LdapException.NO_RESULTS_RETURNED);
 			}
 			else if (values.Length > 1)
 			{
-				throw new LdapLocalException(ExceptionMessages.MULTIPLE_SCHEMA, new System.Object[]{dn}, LdapException.CONSTRAINT_VIOLATION);
+				throw new LdapLocalException(ExceptionMessages.MULTIPLE_SCHEMA, new object[]{dn}, LdapException.CONSTRAINT_VIOLATION);
 			}
 			return values[0];
 		}

@@ -185,7 +185,7 @@ namespace Novell.Directory.Ldap
 					if ((complete || !acceptReplies) && (replies.Count == 0))
 					{
 						// Remove msg from connection queue when last reply read
-						conn.removeMessage(this);
+						conn.RemoveMessage(this);
 					}
 					else
 					{
@@ -228,7 +228,7 @@ namespace Novell.Directory.Ldap
 				if ((conn != null) && (complete || !acceptReplies) && (replies.Count == 0))
 				{
 					// Remove msg from connection queue when last reply read
-					conn.removeMessage(this);
+					conn.RemoveMessage(this);
 				}
 				return msg;
 			}
@@ -371,9 +371,9 @@ namespace Novell.Directory.Ldap
 						{
 							// Semaphore id for sasl bind
 							id = conn.BindSemId;
-							conn.clearBindSemId();
+							conn.ClearBindSemId();
 						}
-						conn.freeWriteSemaphore(id);
+						conn.FreeWriteSemaphore(id);
 					}
 					
 					// Create the abandon message, but don't track it.
@@ -395,7 +395,7 @@ namespace Novell.Directory.Ldap
 				{
 					agent.Abandon(msgId, null);
 				}
-				conn.removeMessage(this);
+				conn.RemoveMessage(this);
 			}
 			// Get rid of all replies queued
 			if (informUserEx != null)
@@ -425,7 +425,7 @@ namespace Novell.Directory.Ldap
 				acceptReplies = false;
 				if (conn != null)
 				{
-					conn.removeMessage(this);
+					conn.RemoveMessage(this);
 				}
 				// Empty out any accumuluated replies
 				if (replies != null)
@@ -515,9 +515,9 @@ namespace Novell.Directory.Ldap
 							{
 								// Semaphore id for sasl bind
 								id = conn.BindSemId;
-								conn.clearBindSemId();
+								conn.ClearBindSemId();
 							}
-							conn.freeWriteSemaphore(id);
+							conn.FreeWriteSemaphore(id);
 						}
 					}
 					break;

@@ -260,7 +260,7 @@ namespace Novell.Directory.Ldap
 
 				{
 
-					return LdapConnection.DEFAULT_PORT;
+					return LdapConnection.DefaultPort;
 
 				}
 
@@ -328,7 +328,7 @@ namespace Novell.Directory.Ldap
 
 		}
 
-		private static readonly int DEFAULT_SCOPE = LdapConnection.SCOPE_BASE;
+		private static readonly int DEFAULT_SCOPE = LdapConnection.ScopeBase;
 
 		
 
@@ -1098,7 +1098,7 @@ namespace Novell.Directory.Ldap
 
 			{
 
-				if (scope == LdapConnection.SCOPE_ONE)
+				if (scope == LdapConnection.ScopeOne)
 
 				{
 
@@ -1346,7 +1346,7 @@ namespace Novell.Directory.Ldap
 
 				scanStart += 7;
 
-				port = LdapConnection.DEFAULT_PORT;
+				port = LdapConnection.DefaultPort;
 
 			}
 
@@ -1358,7 +1358,7 @@ namespace Novell.Directory.Ldap
 
 				scanStart += 8;
 
-				port = LdapConnection.DEFAULT_SSL_PORT;
+				port = LdapConnection.DefaultSslPort;
 
 			}
 
@@ -1606,7 +1606,7 @@ namespace Novell.Directory.Ldap
 
 			{
 
-				scope = LdapConnection.SCOPE_BASE;
+				scope = LdapConnection.ScopeBase;
 
 			}
 
@@ -1614,7 +1614,7 @@ namespace Novell.Directory.Ldap
 
 			{
 
-				scope = LdapConnection.SCOPE_BASE;
+				scope = LdapConnection.ScopeBase;
 
 			}
 
@@ -1622,7 +1622,7 @@ namespace Novell.Directory.Ldap
 
 			{
 
-				scope = LdapConnection.SCOPE_ONE;
+				scope = LdapConnection.ScopeOne;
 
 			}
 
@@ -1630,7 +1630,7 @@ namespace Novell.Directory.Ldap
 
 			{
 
-				scope = LdapConnection.SCOPE_SUB;
+				scope = LdapConnection.ScopeSub;
 
 			}
 

@@ -98,9 +98,9 @@ namespace Novell.Directory.Ldap.Rfc2251
 			if (request)
 			{
 				int scope = ((Asn1Enumerated) origRequest[1]).intValue();
-				if (scope == LdapConnection.SCOPE_ONE)
+				if (scope == LdapConnection.ScopeOne)
 				{
-					set_Renamed(1, new Asn1Enumerated(LdapConnection.SCOPE_BASE));
+					set_Renamed(1, new Asn1Enumerated(LdapConnection.ScopeBase));
 				}
 			}
 			// Replace the filter if specified, otherwise keep original filter

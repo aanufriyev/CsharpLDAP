@@ -78,11 +78,11 @@ namespace Novell.Directory.Ldap
 		/// <returns> scope of a search request
 		/// 
 		/// </returns>
-		/// <seealso cref="Novell.Directory.Ldap.LdapConnection.SCOPE_BASE">
+		/// <seealso cref="LdapConnection.ScopeBase">
 		/// </seealso>
-		/// <seealso cref="Novell.Directory.Ldap.LdapConnection.SCOPE_ONE">
+		/// <seealso cref="LdapConnection.ScopeOne">
 		/// </seealso>
-		/// <seealso cref="Novell.Directory.Ldap.LdapConnection.SCOPE_SUB">
+		/// <seealso cref="LdapConnection.ScopeSub">
 		/// </seealso>
 		virtual public int Scope
 		{

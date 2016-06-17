@@ -96,7 +96,7 @@ namespace Novell.Directory.Ldap
 		/// </summary>
 		/// <seealso cref="Object">
 		/// </seealso>
-		/// <seealso cref="LdapConnection.getProperty">
+		/// <seealso cref="LdapConnection.GetProperty">
 		/// </seealso>
 		/// <summary> Sets all the properties of the constraints object.
 		/// 
@@ -315,7 +315,7 @@ namespace Novell.Directory.Ldap
 		/// </returns>
 		/// <seealso cref="Object">
 		/// </seealso>
-		/// <seealso cref="LdapConnection.getProperty(String)">
+		/// <seealso cref="LdapConnection.GetProperty">
 		/// </seealso>
 		public virtual System.Object getProperty(System.String name)
 		{
@@ -395,7 +395,7 @@ namespace Novell.Directory.Ldap
 		/// @throws NullPointerException if name or value are null
 		/// 
 		/// </param>
-		/// <seealso cref="LdapConnection.getProperty">
+		/// <seealso cref="LdapConnection.GetProperty">
 		/// </seealso>
 		public virtual void  setProperty(System.String name, System.Object value_Renamed)
 		{
